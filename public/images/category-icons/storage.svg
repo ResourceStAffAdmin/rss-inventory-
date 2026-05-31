@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="Storage drive">
+  <defs>
+    <linearGradient id="bg" x1="8" y1="10" x2="88" y2="86" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#e6e0ff"/>
+      <stop offset="1" stop-color="#e8fff6"/>
+    </linearGradient>
+  </defs>
+  <rect width="96" height="96" rx="20" fill="url(#bg)"/>
+  <rect x="22" y="22" width="52" height="22" rx="8" fill="#12263f"/>
+  <rect x="22" y="48" width="52" height="26" rx="8" fill="#27364d"/>
+  <path d="M30 34h22" stroke="#82e4ff" stroke-width="4" stroke-linecap="round"/>
+  <path d="M30 61h22" stroke="#b3fff1" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="64" cy="33" r="4" fill="#1fd1c2"/>
+  <circle cx="64" cy="61" r="4" fill="#fbbf24"/>
+</svg>
