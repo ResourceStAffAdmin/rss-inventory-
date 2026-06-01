@@ -2,10 +2,14 @@ DirectoryIndex index.php
 Options -Indexes
 
 RewriteEngine On
-RewriteBase /rss_inventory/
+RewriteBase /
 
 RewriteCond %{REQUEST_FILENAME} -f [OR]
 RewriteCond %{REQUEST_FILENAME} -d
 RewriteRule ^ - [L]
+
+RewriteCond %{DOCUMENT_ROOT}/public/$1 -f [OR]
+RewriteCond %{DOCUMENT_ROOT}/public/$1 -d
+RewriteRule ^(.*)$ public/$1 [L]
 
 RewriteRule ^ index.php [L]
