@@ -115,6 +115,22 @@ if ($handler === null && $method === 'POST' && preg_match('#^/products/(\d+)/upd
     $handler = [App\Controllers\UiController::class, 'updateProduct'];
     $_POST['id'] = $matches[1];
 }
+if ($handler === null && $method === 'POST' && preg_match('#^/categories/(\d+)/update$#', $uri, $matches) === 1) {
+    $handler = [App\Controllers\UiController::class, 'updateCategory'];
+    $_POST['id'] = $matches[1];
+}
+if ($handler === null && $method === 'POST' && preg_match('#^/categories/(\d+)/delete$#', $uri, $matches) === 1) {
+    $handler = [App\Controllers\UiController::class, 'deleteCategory'];
+    $_POST['id'] = $matches[1];
+}
+if ($handler === null && $method === 'POST' && preg_match('#^/suppliers/(\d+)/update$#', $uri, $matches) === 1) {
+    $handler = [App\Controllers\UiController::class, 'updateSupplier'];
+    $_POST['id'] = $matches[1];
+}
+if ($handler === null && $method === 'POST' && preg_match('#^/suppliers/(\d+)/delete$#', $uri, $matches) === 1) {
+    $handler = [App\Controllers\UiController::class, 'deleteSupplier'];
+    $_POST['id'] = $matches[1];
+}
 if ($handler === null && $method === 'GET' && preg_match('#^/accountability/(\d+)/print$#', $uri, $matches) === 1) {
     $handler = [App\Controllers\UiController::class, 'printAccountability'];
     $_GET['id'] = $matches[1];

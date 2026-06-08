@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 /** @var array<int, array<string, string|int|float>> $movements */
+/** @var array<string,string|int|float>|null $viewMovement */
 /** @var array<string,string> $filters */
 /** @var array<int, array{id:int,name:string,sku:string}> $products */
 /** @var string|null $notice */
@@ -12,6 +13,26 @@ declare(strict_types=1);
 
 $buildUrl = static function (string $path): string {
     return function_exists('app_url') ? app_url($path) : $path;
+};
+$stockUrl = static function (array $overrides = []) use ($buildUrl, $filters): string {
+    $params = [];
+    if (($filters['q'] ?? '') !== '') {
+        $params['q'] = $filters['q'];
+    }
+    if (($filters['type'] ?? '') !== '') {
+        $params['filter_type'] = $filters['type'];
+    }
+
+    foreach ($overrides as $key => $value) {
+        if ($value === null || $value === '') {
+            unset($params[$key]);
+            continue;
+        }
+        $params[$key] = (string) $value;
+    }
+
+    $query = http_build_query($params);
+    return $buildUrl('/stock' . ($query !== '' ? '?' . $query : ''));
 };
 ?>
 <style>
@@ -187,6 +208,39 @@ $buildUrl = static function (string $path): string {
         gap: 8px;
         margin-top: 12px;
     }
+    .detail-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 12px;
+    }
+    .detail-item {
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 10px;
+        background: #f8fafc;
+    }
+    .detail-item.full {
+        grid-column: 1 / -1;
+    }
+    .detail-label {
+        display: block;
+        color: #64748b;
+        font-size: 11px;
+        font-weight: 700;
+        margin-bottom: 4px;
+    }
+    .detail-value {
+        color: #0f172a;
+        font-size: 13px;
+        font-weight: 600;
+        overflow-wrap: anywhere;
+    }
+    @media (max-width: 800px) {
+        .detail-grid {
+            grid-template-columns: 1fr;
+        }
+    }
 </style>
 
 <section class="module-shell">
@@ -267,8 +321,12 @@ $buildUrl = static function (string $path): string {
                             <td><span class="badge <?= $statusClass ?>"><?= htmlspecialchars($statusLabel, ENT_QUOTES, 'UTF-8') ?></span></td>
                             <td>
                                 <div class="table-actions">
-                                    <button class="icon-btn" type="button" title="View">👁</button>
-                                    <button class="icon-btn" type="button" title="More">⋯</button>
+                                    <a
+                                        class="icon-btn"
+                                        href="<?= htmlspecialchars($stockUrl(['movement_id' => (int) $movement['id']]), ENT_QUOTES, 'UTF-8') ?>"
+                                        title="View movement"
+                                        aria-label="View movement"
+                                    >👁</a>
                                 </div>
                             </td>
                         </tr>
@@ -279,15 +337,68 @@ $buildUrl = static function (string $path): string {
         </div>
         <div class="pagination">
             <span>Showing <?= count($movements) ?> movements</span>
-            <div class="pagination-controls">
-                <button class="page-btn" type="button">Prev</button>
-                <button class="page-btn active" type="button">1</button>
-                <button class="page-btn" type="button">2</button>
-                <button class="page-btn" type="button">Next</button>
-            </div>
         </div>
     </article>
 </section>
+
+<?php if ($viewMovement !== null): ?>
+    <?php
+    $movementStatusClass = ((string) $viewMovement['status'] === 'COMPLETED') ? 'success' : 'neutral';
+    $movementStatusLabel = ucfirst(strtolower((string) $viewMovement['status']));
+    ?>
+    <div class="modal-backdrop open" aria-hidden="false">
+        <article class="modal-card" role="dialog" aria-modal="true" aria-labelledby="movementTitle">
+            <h3 id="movementTitle" class="panel-title" style="font-size:20px; margin:0 0 6px;">Stock Movement</h3>
+            <p class="panel-subtitle" style="margin-top:0;"><?= htmlspecialchars((string) $viewMovement['reference'], ENT_QUOTES, 'UTF-8') ?></p>
+
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <span class="detail-label">Date</span>
+                    <span class="detail-value"><?= htmlspecialchars((string) $viewMovement['date'], ENT_QUOTES, 'UTF-8') ?></span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Type</span>
+                    <span class="detail-value"><?= htmlspecialchars((string) $viewMovement['type'], ENT_QUOTES, 'UTF-8') ?></span>
+                </div>
+                <div class="detail-item full">
+                    <span class="detail-label">Item</span>
+                    <span class="detail-value"><?= htmlspecialchars((string) $viewMovement['item'], ENT_QUOTES, 'UTF-8') ?> (<?= htmlspecialchars((string) $viewMovement['sku'], ENT_QUOTES, 'UTF-8') ?>)</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Quantity</span>
+                    <span class="detail-value"><?= htmlspecialchars(number_format((float) $viewMovement['qty'], 0), ENT_QUOTES, 'UTF-8') ?></span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Status</span>
+                    <span class="badge <?= $movementStatusClass ?>"><?= htmlspecialchars($movementStatusLabel, ENT_QUOTES, 'UTF-8') ?></span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Previous Stock</span>
+                    <span class="detail-value"><?= htmlspecialchars(number_format((float) $viewMovement['previous'], 0), ENT_QUOTES, 'UTF-8') ?></span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">New Stock</span>
+                    <span class="detail-value"><?= htmlspecialchars(number_format((float) $viewMovement['new'], 0), ENT_QUOTES, 'UTF-8') ?></span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">User</span>
+                    <span class="detail-value"><?= htmlspecialchars((string) $viewMovement['user'], ENT_QUOTES, 'UTF-8') ?></span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Source</span>
+                    <span class="detail-value"><?= htmlspecialchars((string) $viewMovement['source'], ENT_QUOTES, 'UTF-8') ?></span>
+                </div>
+                <div class="detail-item full">
+                    <span class="detail-label">Reason</span>
+                    <span class="detail-value"><?= htmlspecialchars((string) $viewMovement['reason'], ENT_QUOTES, 'UTF-8') ?></span>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <a class="btn btn-outline" href="<?= htmlspecialchars($stockUrl(['movement_id' => null]), ENT_QUOTES, 'UTF-8') ?>">Close</a>
+            </div>
+        </article>
+    </div>
+<?php endif; ?>
 
 <div id="stockInModal" class="modal-backdrop" aria-hidden="true">
     <article class="modal-card" role="dialog" aria-modal="true" aria-labelledby="stockInTitle">

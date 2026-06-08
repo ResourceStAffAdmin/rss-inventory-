@@ -8,9 +8,27 @@ declare(strict_types=1);
 /** @var string|null $errorMessage */
 /** @var bool $isModalOpen */
 /** @var array<string,string> $formValues */
+/** @var array<string,string|int>|null $editCategory */
 
 $buildUrl = static function (string $path): string {
     return function_exists('app_url') ? app_url($path) : $path;
+};
+$categoryUrl = static function (array $overrides = []) use ($buildUrl, $filters): string {
+    $params = [];
+    if (($filters['q'] ?? '') !== '') {
+        $params['q'] = $filters['q'];
+    }
+
+    foreach ($overrides as $key => $value) {
+        if ($value === null || $value === '') {
+            unset($params[$key]);
+            continue;
+        }
+        $params[$key] = (string) $value;
+    }
+
+    $query = http_build_query($params);
+    return $buildUrl('/categories' . ($query !== '' ? '?' . $query : ''));
 };
 $categoryIcon = static function (string $name): string {
     $normalized = strtolower($name);
@@ -99,6 +117,10 @@ $categoryIcon = static function (string $name): string {
     .table-actions {
         display: inline-flex;
         gap: 6px;
+        align-items: center;
+    }
+    .table-actions form {
+        margin: 0;
     }
     .category-cell {
         display: inline-flex;
@@ -298,8 +320,19 @@ $categoryIcon = static function (string $name): string {
                             </td>
                             <td>
                                 <div class="table-actions">
-                                    <button class="icon-btn" type="button" title="Edit">✎</button>
-                                    <button class="icon-btn" type="button" title="Delete">🗑</button>
+                                    <a
+                                        class="icon-btn"
+                                        href="<?= htmlspecialchars($categoryUrl(['edit_category_id' => (int) $category['id']]), ENT_QUOTES, 'UTF-8') ?>"
+                                        title="Edit category"
+                                        aria-label="Edit category"
+                                    >✎</a>
+                                    <form
+                                        method="post"
+                                        action="<?= htmlspecialchars($buildUrl('/categories/' . (int) $category['id'] . '/delete'), ENT_QUOTES, 'UTF-8') ?>"
+                                        onsubmit="return confirm('Delete this category? Products using it will become uncategorized.');"
+                                    >
+                                        <button class="icon-btn" type="submit" title="Delete category" aria-label="Delete category">🗑</button>
+                                    </form>
                                 </div>
                             </td>
                         </tr>
@@ -310,12 +343,6 @@ $categoryIcon = static function (string $name): string {
         </div>
         <div class="pagination">
             <span>Showing <?= count($categories) ?> categories</span>
-            <div class="pagination-controls">
-                <button class="page-btn" type="button">Prev</button>
-                <button class="page-btn active" type="button">1</button>
-                <button class="page-btn" type="button">2</button>
-                <button class="page-btn" type="button">Next</button>
-            </div>
         </div>
     </article>
 </section>
@@ -348,6 +375,41 @@ $categoryIcon = static function (string $name): string {
         </form>
     </article>
 </div>
+
+<?php if ($editCategory !== null): ?>
+    <div class="modal-backdrop open" aria-hidden="false">
+        <article class="modal-card" role="dialog" aria-modal="true" aria-labelledby="editCategoryTitle">
+            <h3 id="editCategoryTitle" class="panel-title" style="font-size:20px; margin:0 0 6px;">Edit Category</h3>
+            <p class="panel-subtitle" style="margin-top:0;">Update this category name, description, or status.</p>
+
+            <form
+                method="post"
+                action="<?= htmlspecialchars($buildUrl('/categories/' . (int) $editCategory['id'] . '/update'), ENT_QUOTES, 'UTF-8') ?>"
+                style="margin-top:12px;"
+            >
+                <label class="modal-field">
+                    <span class="modal-label">Category Name *</span>
+                    <input class="modal-input" type="text" name="name" required maxlength="120" value="<?= htmlspecialchars((string) $editCategory['name'], ENT_QUOTES, 'UTF-8') ?>">
+                </label>
+                <label class="modal-field">
+                    <span class="modal-label">Description</span>
+                    <textarea class="modal-textarea" name="description"><?= htmlspecialchars((string) $editCategory['description'], ENT_QUOTES, 'UTF-8') ?></textarea>
+                </label>
+                <label class="modal-field">
+                    <span class="modal-label">Status</span>
+                    <select class="modal-select" name="is_active">
+                        <option value="1"<?= ((int) $editCategory['is_active'] === 1) ? ' selected' : '' ?>>Active</option>
+                        <option value="0"<?= ((int) $editCategory['is_active'] === 0) ? ' selected' : '' ?>>Inactive</option>
+                    </select>
+                </label>
+                <div class="modal-actions">
+                    <a class="btn btn-outline" href="<?= htmlspecialchars($categoryUrl(['edit_category_id' => null]), ENT_QUOTES, 'UTF-8') ?>">Cancel</a>
+                    <button class="btn" type="submit">Update Category</button>
+                </div>
+            </form>
+        </article>
+    </div>
+<?php endif; ?>
 
 <script>
 (() => {

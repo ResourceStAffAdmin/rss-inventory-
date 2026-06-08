@@ -118,10 +118,6 @@ declare(strict_types=1);
                         >
                             <?= htmlspecialchars($action['label'], ENT_QUOTES, 'UTF-8') ?>
                         </a>
-                    <?php else: ?>
-                        <button class="action-btn<?= $variant === 'alt' ? ' alt' : '' ?>" type="button">
-                            <?= htmlspecialchars($action['label'], ENT_QUOTES, 'UTF-8') ?>
-                        </button>
                     <?php endif; ?>
                 <?php endforeach; ?>
             </div>

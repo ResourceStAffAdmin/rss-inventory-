@@ -353,6 +353,71 @@ final class UiController
         $this->redirect('/categories?created=1');
     }
 
+    public function updateCategory(): void
+    {
+        $pdo = Database::connection();
+
+        $id = trim((string) ($_POST['id'] ?? ''));
+        $name = trim((string) ($_POST['name'] ?? ''));
+        $description = trim((string) ($_POST['description'] ?? ''));
+        $isActive = (string) ($_POST['is_active'] ?? '1');
+
+        if ($id === '' || !ctype_digit($id)) {
+            $this->redirect('/categories?error=' . rawurlencode('Invalid category selected.'));
+        }
+
+        if ($name === '') {
+            $this->redirectWithCategoryEditError((int) $id, 'Category name is required.');
+        }
+
+        try {
+            $statement = $pdo->prepare(
+                'UPDATE categories
+                 SET name = :name,
+                     description = :description,
+                     is_active = :is_active
+                 WHERE id = :id'
+            );
+            $statement->execute([
+                ':id' => (int) $id,
+                ':name' => $name,
+                ':description' => $description !== '' ? $description : null,
+                ':is_active' => $isActive === '0' ? 0 : 1,
+            ]);
+        } catch (PDOException $exception) {
+            $this->redirectWithCategoryEditError((int) $id, 'Unable to update category. Name may already exist.');
+        }
+
+        $this->redirect('/categories?updated=1');
+    }
+
+    public function deleteCategory(): void
+    {
+        $pdo = Database::connection();
+        $id = trim((string) ($_POST['id'] ?? ''));
+
+        if ($id === '' || !ctype_digit($id)) {
+            $this->redirect('/categories?error=' . rawurlencode('Invalid category selected.'));
+        }
+
+        $pdo->beginTransaction();
+
+        try {
+            $clearProducts = $pdo->prepare('UPDATE products SET category_id = NULL WHERE category_id = :id');
+            $clearProducts->execute([':id' => (int) $id]);
+
+            $deactivate = $pdo->prepare('UPDATE categories SET is_active = 0 WHERE id = :id');
+            $deactivate->execute([':id' => (int) $id]);
+
+            $pdo->commit();
+        } catch (PDOException $exception) {
+            $pdo->rollBack();
+            $this->redirect('/categories?error=' . rawurlencode('Unable to delete category.'));
+        }
+
+        $this->redirect('/categories?deleted=1');
+    }
+
     public function createSupplier(): void
     {
         $pdo = Database::connection();
@@ -400,6 +465,80 @@ final class UiController
         }
 
         $this->redirect('/suppliers?created=1');
+    }
+
+    public function updateSupplier(): void
+    {
+        $pdo = Database::connection();
+
+        $id = trim((string) ($_POST['id'] ?? ''));
+        $supplierCode = trim((string) ($_POST['supplier_code'] ?? ''));
+        $companyName = trim((string) ($_POST['company_name'] ?? ''));
+        $contactName = trim((string) ($_POST['contact_name'] ?? ''));
+        $email = trim((string) ($_POST['email'] ?? ''));
+        $phone = trim((string) ($_POST['phone'] ?? ''));
+        $isActive = (string) ($_POST['is_active'] ?? '1');
+
+        if ($id === '' || !ctype_digit($id)) {
+            $this->redirect('/suppliers?error=' . rawurlencode('Invalid supplier selected.'));
+        }
+
+        if ($supplierCode === '' || $companyName === '') {
+            $this->redirectWithSupplierEditError((int) $id, 'Supplier code and name are required.');
+        }
+
+        try {
+            $statement = $pdo->prepare(
+                'UPDATE suppliers
+                 SET supplier_code = :supplier_code,
+                     company_name = :company_name,
+                     contact_name = :contact_name,
+                     email = :email,
+                     phone = :phone,
+                     is_active = :is_active
+                 WHERE id = :id'
+            );
+            $statement->execute([
+                ':id' => (int) $id,
+                ':supplier_code' => $supplierCode,
+                ':company_name' => $companyName,
+                ':contact_name' => $contactName !== '' ? $contactName : null,
+                ':email' => $email !== '' ? $email : null,
+                ':phone' => $phone !== '' ? $phone : null,
+                ':is_active' => $isActive === '0' ? 0 : 1,
+            ]);
+        } catch (PDOException $exception) {
+            $this->redirectWithSupplierEditError((int) $id, 'Unable to update supplier. Code may already exist.');
+        }
+
+        $this->redirect('/suppliers?updated=1');
+    }
+
+    public function deleteSupplier(): void
+    {
+        $pdo = Database::connection();
+        $id = trim((string) ($_POST['id'] ?? ''));
+
+        if ($id === '' || !ctype_digit($id)) {
+            $this->redirect('/suppliers?error=' . rawurlencode('Invalid supplier selected.'));
+        }
+
+        $pdo->beginTransaction();
+
+        try {
+            $clearProducts = $pdo->prepare('UPDATE products SET preferred_supplier_id = NULL WHERE preferred_supplier_id = :id');
+            $clearProducts->execute([':id' => (int) $id]);
+
+            $deactivate = $pdo->prepare('UPDATE suppliers SET is_active = 0 WHERE id = :id');
+            $deactivate->execute([':id' => (int) $id]);
+
+            $pdo->commit();
+        } catch (PDOException $exception) {
+            $pdo->rollBack();
+            $this->redirect('/suppliers?error=' . rawurlencode('Unable to delete supplier.'));
+        }
+
+        $this->redirect('/suppliers?deleted=1');
     }
 
     public function createStockMovement(): void
@@ -600,6 +739,10 @@ final class UiController
         $filters = [
             'q' => trim((string) ($_GET['q'] ?? '')),
         ];
+        $editCategoryId = trim((string) ($_GET['edit_category_id'] ?? ''));
+        $editCategory = $editCategoryId !== '' && ctype_digit($editCategoryId)
+            ? $this->categoryDetail($pdo, (int) $editCategoryId)
+            : null;
 
         View::render('categories/index', [
             'pageTitle' => 'Categories',
@@ -607,9 +750,14 @@ final class UiController
             'description' => 'Organize items into categories for faster search and reporting.',
             'categories' => $this->categoryRows($pdo, $filters),
             'filters' => $filters,
-            'notice' => isset($_GET['created']) ? 'Category saved successfully.' : null,
+            'notice' => isset($_GET['created'])
+                ? 'Category saved successfully.'
+                : (isset($_GET['updated'])
+                    ? 'Category updated successfully.'
+                    : (isset($_GET['deleted']) ? 'Category deleted successfully.' : null)),
             'errorMessage' => isset($_GET['error']) ? (string) $_GET['error'] : null,
             'isModalOpen' => isset($_GET['openNewCategory']),
+            'editCategory' => $editCategory,
             'formValues' => [
                 'name' => (string) ($_GET['name'] ?? ''),
                 'description' => (string) ($_GET['description'] ?? ''),
@@ -626,12 +774,17 @@ final class UiController
             'q' => trim((string) ($_GET['q'] ?? '')),
             'type' => trim((string) ($_GET['filter_type'] ?? '')),
         ];
+        $movementId = trim((string) ($_GET['movement_id'] ?? ''));
+        $viewMovement = $movementId !== '' && ctype_digit($movementId)
+            ? $this->stockMovementDetail($pdo, (int) $movementId)
+            : null;
 
         View::render('stock/index', [
             'pageTitle' => 'Stock Management',
             'currentRoute' => '/stock',
             'description' => 'Record stock in, stock out, and adjustments with full traceability.',
             'movements' => $this->stockRows($pdo, $filters),
+            'viewMovement' => $viewMovement,
             'filters' => $filters,
             'products' => $this->productOptions($pdo),
             'notice' => isset($_GET['created']) ? 'Stock movement saved.' : null,
@@ -1024,11 +1177,9 @@ final class UiController
             description: 'Monitor items below reorder level and prioritize restocking.',
             tableHeaders: ['Item', 'SKU', 'Category', 'Qty', 'Reorder', 'Supplier', 'Status'],
             tableRows: [],
-            actions: [
-                ['label' => 'Filter', 'variant' => 'alt'],
-            ],
+            actions: [],
             moduleKpis: [],
-            searchPlaceholder: 'Search low stock items...'
+            searchPlaceholder: null
         );
     }
 
@@ -1039,6 +1190,10 @@ final class UiController
         $filters = [
             'q' => trim((string) ($_GET['q'] ?? '')),
         ];
+        $editSupplierId = trim((string) ($_GET['edit_supplier_id'] ?? ''));
+        $editSupplier = $editSupplierId !== '' && ctype_digit($editSupplierId)
+            ? $this->supplierDetail($pdo, (int) $editSupplierId)
+            : null;
 
         View::render('suppliers/index', [
             'pageTitle' => 'Suppliers',
@@ -1046,9 +1201,14 @@ final class UiController
             'description' => 'Manage supplier profiles and link them to items.',
             'suppliers' => $this->supplierRows($pdo, $filters),
             'filters' => $filters,
-            'notice' => isset($_GET['created']) ? 'Supplier saved successfully.' : null,
+            'notice' => isset($_GET['created'])
+                ? 'Supplier saved successfully.'
+                : (isset($_GET['updated'])
+                    ? 'Supplier updated successfully.'
+                    : (isset($_GET['deleted']) ? 'Supplier deleted successfully.' : null)),
             'errorMessage' => isset($_GET['error']) ? (string) $_GET['error'] : null,
             'isModalOpen' => isset($_GET['openNewSupplier']),
+            'editSupplier' => $editSupplier,
             'formValues' => [
                 'supplier_code' => (string) ($_GET['supplier_code'] ?? ''),
                 'company_name' => (string) ($_GET['company_name'] ?? ''),
@@ -1068,11 +1228,9 @@ final class UiController
             description: 'Track important actions performed on inventory items.',
             tableHeaders: ['Date', 'Action', 'Item', 'Qty', 'User'],
             tableRows: [],
-            actions: [
-                ['label' => 'Filter', 'variant' => 'alt'],
-            ],
+            actions: [],
             moduleKpis: [],
-            searchPlaceholder: 'Search actions, items, or users...'
+            searchPlaceholder: null
         );
     }
 
@@ -1132,9 +1290,7 @@ final class UiController
             description: 'Generate basic inventory summaries and movement reports.',
             tableHeaders: ['Report', 'Description', 'Last Generated', 'Status'],
             tableRows: [],
-            actions: [
-                ['label' => 'Generate', 'variant' => 'primary'],
-            ],
+            actions: [],
             moduleKpis: [],
             searchPlaceholder: null
         );
@@ -1881,6 +2037,114 @@ final class UiController
     }
 
     /**
+     * @return array<string, string|int>|null
+     */
+    private function categoryDetail(PDO $pdo, int $id): ?array
+    {
+        $statement = $pdo->prepare(
+            'SELECT id, name, description, COALESCE(is_active, 1) AS is_active
+             FROM categories
+             WHERE id = :id
+             LIMIT 1'
+        );
+        $statement->execute([':id' => $id]);
+        $row = $statement->fetch(PDO::FETCH_ASSOC);
+
+        if ($row === false) {
+            return null;
+        }
+
+        return [
+            'id' => (int) $row['id'],
+            'name' => (string) $row['name'],
+            'description' => (string) ($row['description'] ?? ''),
+            'is_active' => (int) $row['is_active'],
+        ];
+    }
+
+    /**
+     * @return array<string, string|int>|null
+     */
+    private function supplierDetail(PDO $pdo, int $id): ?array
+    {
+        $statement = $pdo->prepare(
+            'SELECT id, supplier_code, company_name, contact_name, email, phone, is_active
+             FROM suppliers
+             WHERE id = :id
+             LIMIT 1'
+        );
+        $statement->execute([':id' => $id]);
+        $row = $statement->fetch(PDO::FETCH_ASSOC);
+
+        if ($row === false) {
+            return null;
+        }
+
+        return [
+            'id' => (int) $row['id'],
+            'supplier_code' => (string) $row['supplier_code'],
+            'company_name' => (string) $row['company_name'],
+            'contact_name' => (string) ($row['contact_name'] ?? ''),
+            'email' => (string) ($row['email'] ?? ''),
+            'phone' => (string) ($row['phone'] ?? ''),
+            'is_active' => (int) $row['is_active'],
+        ];
+    }
+
+    /**
+     * @return array<string, string|int|float>|null
+     */
+    private function stockMovementDetail(PDO $pdo, int $id): ?array
+    {
+        $statement = $pdo->prepare(
+            'SELECT
+                m.id,
+                DATE_FORMAT(m.moved_at, "%Y-%m-%d %H:%i") AS moved_at,
+                m.movement_type,
+                m.quantity,
+                m.previous_stock,
+                m.new_stock,
+                m.status,
+                m.reason,
+                m.reference_type,
+                m.reference_id,
+                p.name AS item_name,
+                p.sku,
+                COALESCE(u.full_name, "System") AS user_name
+             FROM inventory_movements m
+             INNER JOIN products p ON p.id = m.product_id
+             LEFT JOIN users u ON u.id = m.moved_by
+             WHERE m.id = :id
+             LIMIT 1'
+        );
+        $statement->execute([':id' => $id]);
+        $row = $statement->fetch(PDO::FETCH_ASSOC);
+
+        if ($row === false) {
+            return null;
+        }
+
+        return [
+            'id' => (int) $row['id'],
+            'date' => (string) $row['moved_at'],
+            'reference' => 'MOV-' . str_pad((string) $row['id'], 6, '0', STR_PAD_LEFT),
+            'item' => (string) $row['item_name'],
+            'sku' => (string) ($row['sku'] ?? ''),
+            'type' => $this->movementLabel((string) $row['movement_type']),
+            'qty' => (float) $row['quantity'],
+            'previous' => (float) ($row['previous_stock'] ?? 0),
+            'new' => (float) ($row['new_stock'] ?? 0),
+            'user' => (string) $row['user_name'],
+            'status' => (string) ($row['status'] ?? 'COMPLETED'),
+            'reason' => trim((string) ($row['reason'] ?? '')) !== '' ? (string) $row['reason'] : '-',
+            'source' => trim((string) ($row['reference_type'] ?? '')) !== ''
+                ? (string) $row['reference_type']
+                : '-',
+            'source_id' => $row['reference_id'] !== null ? (int) $row['reference_id'] : '-',
+        ];
+    }
+
+    /**
      * @return array<int, array{label:string,value:string}>
      */
     private function productsKpis(PDO $pdo): array
@@ -1944,7 +2208,7 @@ final class UiController
      */
     private function supplierOptions(PDO $pdo): array
     {
-        $statement = $pdo->query('SELECT id, company_name FROM suppliers ORDER BY company_name ASC');
+        $statement = $pdo->query('SELECT id, company_name FROM suppliers WHERE is_active = 1 ORDER BY company_name ASC');
         return array_map(
             static fn (array $row): array => ['id' => (int) $row['id'], 'name' => (string) $row['company_name']],
             $statement->fetchAll(PDO::FETCH_ASSOC)
@@ -1967,7 +2231,7 @@ final class UiController
             FROM categories c
             LEFT JOIN products p ON p.category_id = c.id AND p.is_active = 1
             LEFT JOIN inventory_balances ib ON ib.product_id = p.id
-            WHERE 1=1';
+            WHERE COALESCE(c.is_active, 1) = 1';
 
         $params = [];
         $search = trim((string) ($filters['q'] ?? ''));
@@ -2011,8 +2275,8 @@ final class UiController
                 s.is_active,
                 COUNT(p.id) AS linked_items
             FROM suppliers s
-            LEFT JOIN products p ON p.preferred_supplier_id = s.id
-            WHERE 1=1';
+            LEFT JOIN products p ON p.preferred_supplier_id = s.id AND p.is_active = 1
+            WHERE s.is_active = 1';
 
         $params = [];
         $search = trim((string) ($filters['q'] ?? ''));
@@ -2351,6 +2615,7 @@ final class UiController
         $rows = [];
         foreach ($statement->fetchAll(PDO::FETCH_ASSOC) as $row) {
             $rows[] = [
+                'id' => (int) $row['id'],
                 'date' => (string) $row['moved_at'],
                 'reference' => 'MOV-' . str_pad((string) $row['id'], 6, '0', STR_PAD_LEFT),
                 'item' => (string) $row['item_name'],
@@ -2576,12 +2841,30 @@ final class UiController
         $this->redirect('/categories?' . $query);
     }
 
+    private function redirectWithCategoryEditError(int $categoryId, string $message): void
+    {
+        $query = http_build_query([
+            'error' => $message,
+            'edit_category_id' => $categoryId,
+        ]);
+        $this->redirect('/categories?' . $query);
+    }
+
     /**
      * @param array<string, string> $fields
      */
     private function redirectWithSupplierError(string $message, array $fields): void
     {
         $query = http_build_query(array_merge(['error' => $message, 'openNewSupplier' => '1'], $fields));
+        $this->redirect('/suppliers?' . $query);
+    }
+
+    private function redirectWithSupplierEditError(int $supplierId, string $message): void
+    {
+        $query = http_build_query([
+            'error' => $message,
+            'edit_supplier_id' => $supplierId,
+        ]);
         $this->redirect('/suppliers?' . $query);
     }
 

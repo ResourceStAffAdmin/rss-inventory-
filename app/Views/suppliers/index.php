@@ -8,9 +8,27 @@ declare(strict_types=1);
 /** @var string|null $errorMessage */
 /** @var bool $isModalOpen */
 /** @var array<string,string> $formValues */
+/** @var array<string,string|int>|null $editSupplier */
 
 $buildUrl = static function (string $path): string {
     return function_exists('app_url') ? app_url($path) : $path;
+};
+$supplierUrl = static function (array $overrides = []) use ($buildUrl, $filters): string {
+    $params = [];
+    if (($filters['q'] ?? '') !== '') {
+        $params['q'] = $filters['q'];
+    }
+
+    foreach ($overrides as $key => $value) {
+        if ($value === null || $value === '') {
+            unset($params[$key]);
+            continue;
+        }
+        $params[$key] = (string) $value;
+    }
+
+    $query = http_build_query($params);
+    return $buildUrl('/suppliers' . ($query !== '' ? '?' . $query : ''));
 };
 ?>
 <style>
@@ -78,6 +96,10 @@ $buildUrl = static function (string $path): string {
     .table-actions {
         display: inline-flex;
         gap: 6px;
+        align-items: center;
+    }
+    .table-actions form {
+        margin: 0;
     }
     .icon-btn {
         border: 1px solid #e2e8f0;
@@ -251,8 +273,19 @@ $buildUrl = static function (string $path): string {
                             </td>
                             <td>
                                 <div class="table-actions">
-                                    <button class="icon-btn" type="button" title="Edit">✎</button>
-                                    <button class="icon-btn" type="button" title="Delete">🗑</button>
+                                    <a
+                                        class="icon-btn"
+                                        href="<?= htmlspecialchars($supplierUrl(['edit_supplier_id' => (int) $supplier['id']]), ENT_QUOTES, 'UTF-8') ?>"
+                                        title="Edit supplier"
+                                        aria-label="Edit supplier"
+                                    >✎</a>
+                                    <form
+                                        method="post"
+                                        action="<?= htmlspecialchars($buildUrl('/suppliers/' . (int) $supplier['id'] . '/delete'), ENT_QUOTES, 'UTF-8') ?>"
+                                        onsubmit="return confirm('Delete this supplier? Products using it will have their supplier cleared.');"
+                                    >
+                                        <button class="icon-btn" type="submit" title="Delete supplier" aria-label="Delete supplier">🗑</button>
+                                    </form>
                                 </div>
                             </td>
                         </tr>
@@ -263,12 +296,6 @@ $buildUrl = static function (string $path): string {
         </div>
         <div class="pagination">
             <span>Showing <?= count($suppliers) ?> suppliers</span>
-            <div class="pagination-controls">
-                <button class="page-btn" type="button">Prev</button>
-                <button class="page-btn active" type="button">1</button>
-                <button class="page-btn" type="button">2</button>
-                <button class="page-btn" type="button">Next</button>
-            </div>
         </div>
     </article>
 </section>
@@ -315,6 +342,55 @@ $buildUrl = static function (string $path): string {
         </form>
     </article>
 </div>
+
+<?php if ($editSupplier !== null): ?>
+    <div class="modal-backdrop open" aria-hidden="false">
+        <article class="modal-card" role="dialog" aria-modal="true" aria-labelledby="editSupplierTitle">
+            <h3 id="editSupplierTitle" class="panel-title" style="font-size:20px; margin:0 0 6px;">Edit Supplier</h3>
+            <p class="panel-subtitle" style="margin-top:0;">Update supplier details and status.</p>
+
+            <form
+                method="post"
+                action="<?= htmlspecialchars($buildUrl('/suppliers/' . (int) $editSupplier['id'] . '/update'), ENT_QUOTES, 'UTF-8') ?>"
+                style="margin-top:12px;"
+            >
+                <div class="modal-grid">
+                    <label class="modal-field">
+                        <span class="modal-label">Supplier Code *</span>
+                        <input class="modal-input" type="text" name="supplier_code" required maxlength="40" value="<?= htmlspecialchars((string) $editSupplier['supplier_code'], ENT_QUOTES, 'UTF-8') ?>">
+                    </label>
+                    <label class="modal-field">
+                        <span class="modal-label">Company Name *</span>
+                        <input class="modal-input" type="text" name="company_name" required maxlength="150" value="<?= htmlspecialchars((string) $editSupplier['company_name'], ENT_QUOTES, 'UTF-8') ?>">
+                    </label>
+                    <label class="modal-field">
+                        <span class="modal-label">Contact Name</span>
+                        <input class="modal-input" type="text" name="contact_name" maxlength="120" value="<?= htmlspecialchars((string) $editSupplier['contact_name'], ENT_QUOTES, 'UTF-8') ?>">
+                    </label>
+                    <label class="modal-field">
+                        <span class="modal-label">Email</span>
+                        <input class="modal-input" type="email" name="email" maxlength="191" value="<?= htmlspecialchars((string) $editSupplier['email'], ENT_QUOTES, 'UTF-8') ?>">
+                    </label>
+                    <label class="modal-field">
+                        <span class="modal-label">Phone</span>
+                        <input class="modal-input" type="text" name="phone" maxlength="40" value="<?= htmlspecialchars((string) $editSupplier['phone'], ENT_QUOTES, 'UTF-8') ?>">
+                    </label>
+                    <label class="modal-field">
+                        <span class="modal-label">Status</span>
+                        <select class="modal-select" name="is_active">
+                            <option value="1"<?= ((int) $editSupplier['is_active'] === 1) ? ' selected' : '' ?>>Active</option>
+                            <option value="0"<?= ((int) $editSupplier['is_active'] === 0) ? ' selected' : '' ?>>Inactive</option>
+                        </select>
+                    </label>
+                </div>
+                <div class="modal-actions">
+                    <a class="btn btn-outline" href="<?= htmlspecialchars($supplierUrl(['edit_supplier_id' => null]), ENT_QUOTES, 'UTF-8') ?>">Cancel</a>
+                    <button class="btn" type="submit">Update Supplier</button>
+                </div>
+            </form>
+        </article>
+    </div>
+<?php endif; ?>
 
 <script>
 (() => {
