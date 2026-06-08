@@ -1597,7 +1597,7 @@ final class UiController
              LEFT JOIN categories c ON c.id = p.category_id
              LEFT JOIN suppliers s ON s.id = p.preferred_supplier_id
              LEFT JOIN inventory_balances ib ON ib.product_id = p.id
-             WHERE 1=1';
+             WHERE p.is_active = 1';
 
         $params = [];
         $search = trim((string) ($filters['q'] ?? ''));
@@ -1655,10 +1655,13 @@ final class UiController
      */
     private function productsKpis(PDO $pdo): array
     {
-        $totalItems = (int) $pdo->query('SELECT COUNT(*) FROM products')->fetchColumn();
+        $totalItems = (int) $pdo->query('SELECT COUNT(*) FROM products WHERE is_active = 1')->fetchColumn();
 
         $totalStockValue = (float) $pdo->query(
-            'SELECT COALESCE(SUM(ib.quantity_on_hand * p.cost_price), 0) FROM products p LEFT JOIN inventory_balances ib ON ib.product_id = p.id'
+            'SELECT COALESCE(SUM(ib.quantity_on_hand * p.cost_price), 0)
+             FROM products p
+             LEFT JOIN inventory_balances ib ON ib.product_id = p.id
+             WHERE p.is_active = 1'
         )->fetchColumn();
 
         $lowStock = (int) $pdo->query(
@@ -1667,6 +1670,7 @@ final class UiController
                 SELECT p.id
                 FROM products p
                 LEFT JOIN inventory_balances ib ON ib.product_id = p.id
+                WHERE p.is_active = 1
                 GROUP BY p.id, p.reorder_level
                 HAVING COALESCE(SUM(ib.quantity_on_hand), 0) > 0
                    AND COALESCE(SUM(ib.quantity_on_hand), 0) <= p.reorder_level
@@ -1679,6 +1683,7 @@ final class UiController
                 SELECT p.id
                 FROM products p
                 LEFT JOIN inventory_balances ib ON ib.product_id = p.id
+                WHERE p.is_active = 1
                 GROUP BY p.id
                 HAVING COALESCE(SUM(ib.quantity_on_hand), 0) <= 0
              ) AS out_stock'
@@ -1697,7 +1702,7 @@ final class UiController
      */
     private function categoryOptions(PDO $pdo): array
     {
-        $statement = $pdo->query('SELECT id, name FROM categories ORDER BY name ASC');
+        $statement = $pdo->query('SELECT id, name FROM categories WHERE is_active = 1 ORDER BY name ASC');
         return array_map(
             static fn (array $row): array => ['id' => (int) $row['id'], 'name' => (string) $row['name']],
             $statement->fetchAll(PDO::FETCH_ASSOC)
@@ -1730,7 +1735,7 @@ final class UiController
                 COUNT(DISTINCT p.id) AS item_count,
                 COALESCE(SUM(ib.quantity_on_hand * p.cost_price), 0) AS stock_value
             FROM categories c
-            LEFT JOIN products p ON p.category_id = c.id
+            LEFT JOIN products p ON p.category_id = c.id AND p.is_active = 1
             LEFT JOIN inventory_balances ib ON ib.product_id = p.id
             WHERE 1=1';
 
@@ -2137,7 +2142,7 @@ final class UiController
      */
     private function productOptions(PDO $pdo): array
     {
-        $statement = $pdo->query('SELECT id, name, sku FROM products ORDER BY name ASC');
+        $statement = $pdo->query('SELECT id, name, sku FROM products WHERE is_active = 1 ORDER BY name ASC');
         return array_map(
             static fn (array $row): array => [
                 'id' => (int) $row['id'],
@@ -2461,16 +2466,20 @@ final class UiController
      */
     private function dashboardKpis(PDO $pdo): array
     {
-        $totalItems = (int) $pdo->query('SELECT COUNT(*) FROM products')->fetchColumn();
+        $totalItems = (int) $pdo->query('SELECT COUNT(*) FROM products WHERE is_active = 1')->fetchColumn();
         $totalStockValue = (float) $pdo->query(
-            'SELECT COALESCE(SUM(ib.quantity_on_hand * p.cost_price), 0) FROM products p LEFT JOIN inventory_balances ib ON ib.product_id = p.id'
+            'SELECT COALESCE(SUM(ib.quantity_on_hand * p.cost_price), 0)
+             FROM products p
+             LEFT JOIN inventory_balances ib ON ib.product_id = p.id
+             WHERE p.is_active = 1'
         )->fetchColumn();
 
         $lowStockItems = (int) $pdo->query(
             'SELECT COUNT(*)
              FROM products p
              LEFT JOIN inventory_balances ib ON ib.product_id = p.id
-             WHERE COALESCE(ib.quantity_on_hand, 0) > 0
+             WHERE p.is_active = 1
+               AND COALESCE(ib.quantity_on_hand, 0) > 0
                AND COALESCE(ib.quantity_on_hand, 0) <= COALESCE(p.reorder_level, 0)'
         )->fetchColumn();
 
@@ -2478,7 +2487,8 @@ final class UiController
             'SELECT COUNT(*)
              FROM products p
              LEFT JOIN inventory_balances ib ON ib.product_id = p.id
-             WHERE COALESCE(ib.quantity_on_hand, 0) <= 0'
+             WHERE p.is_active = 1
+               AND COALESCE(ib.quantity_on_hand, 0) <= 0'
         )->fetchColumn();
 
         $pendingPurchaseOrders = (int) $pdo->query(
@@ -2517,6 +2527,7 @@ final class UiController
              FROM inventory_movements m
              INNER JOIN products p ON p.id = m.product_id
              LEFT JOIN users u ON u.id = m.moved_by
+             WHERE p.is_active = 1
              ORDER BY m.moved_at DESC, m.id DESC
              LIMIT 4'
         );
@@ -2565,7 +2576,8 @@ final class UiController
                 COALESCE(p.reorder_level, 0) AS reorder_level
              FROM products p
              LEFT JOIN inventory_balances ib ON ib.product_id = p.id
-             WHERE COALESCE(ib.quantity_on_hand, 0) > 0
+             WHERE p.is_active = 1
+               AND COALESCE(ib.quantity_on_hand, 0) > 0
                AND COALESCE(ib.quantity_on_hand, 0) <= COALESCE(p.reorder_level, 0)
              ORDER BY quantity_on_hand ASC, p.name ASC
              LIMIT 5'
@@ -2595,7 +2607,8 @@ final class UiController
                 COALESCE(p.reorder_level, 0) AS reorder_level
              FROM products p
              LEFT JOIN inventory_balances ib ON ib.product_id = p.id
-             WHERE COALESCE(ib.quantity_on_hand, 0) <= 0
+             WHERE p.is_active = 1
+               AND COALESCE(ib.quantity_on_hand, 0) <= 0
              ORDER BY p.name ASC
              LIMIT 5'
         );
