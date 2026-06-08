@@ -102,23 +102,47 @@ final class UiController
     {
         $pdo = Database::connection();
 
+        $page = max(1, (int) ($_GET['page'] ?? 1));
+        $perPage = 20;
         $filters = [
             'q' => trim((string) ($_GET['q'] ?? '')),
             'category_id' => trim((string) ($_GET['filter_category_id'] ?? '')),
             'status' => trim((string) ($_GET['filter_status'] ?? '')),
         ];
+        $totalRows = $this->productRowCount($pdo, $filters);
+        $totalPages = max(1, (int) ceil($totalRows / $perPage));
+        $page = min($page, $totalPages);
+
+        $viewProductId = trim((string) ($_GET['view_product_id'] ?? ''));
+        $editProductId = trim((string) ($_GET['edit_product_id'] ?? ''));
+        $viewProduct = $editProductId === '' && $viewProductId !== '' && ctype_digit($viewProductId)
+            ? $this->productDetail($pdo, (int) $viewProductId)
+            : null;
+        $editProduct = $editProductId !== '' && ctype_digit($editProductId)
+            ? $this->productDetail($pdo, (int) $editProductId)
+            : null;
 
         View::render('products/index', [
             'pageTitle' => 'Products',
             'currentRoute' => '/products',
             'description' => 'Add, update, and track items with stock levels and reorder points.',
             'tableHeaders' => ['Item', 'SKU', 'Category', 'Qty', 'Unit', 'Reorder Point', 'Supplier', 'Status', 'Actions'],
-            'tableRows' => $this->productRows($pdo, $filters),
+            'tableRows' => $this->productRows($pdo, $filters, $page, $perPage),
             'moduleKpis' => $this->productsKpis($pdo),
             'searchPlaceholder' => 'Search items or SKU...',
-            'notice' => isset($_GET['created']) ? 'New item saved successfully.' : null,
+            'notice' => isset($_GET['created'])
+                ? 'New item saved successfully.'
+                : (isset($_GET['updated']) ? 'Item updated successfully.' : null),
             'errorMessage' => isset($_GET['error']) ? (string) $_GET['error'] : null,
             'isModalOpen' => isset($_GET['openNewItem']) || isset($_GET['openModal']),
+            'viewProduct' => $viewProduct,
+            'editProduct' => $editProduct,
+            'pagination' => [
+                'page' => $page,
+                'per_page' => $perPage,
+                'total_rows' => $totalRows,
+                'total_pages' => $totalPages,
+            ],
             'categories' => $this->categoryOptions($pdo),
             'suppliers' => $this->supplierOptions($pdo),
             'filters' => $filters,
@@ -231,6 +255,66 @@ final class UiController
         }
 
         $this->redirect('/products?created=1');
+    }
+
+    public function updateProduct(): void
+    {
+        $pdo = Database::connection();
+
+        $id = trim((string) ($_POST['id'] ?? ''));
+        $sku = trim((string) ($_POST['sku'] ?? ''));
+        $name = trim((string) ($_POST['name'] ?? ''));
+        $categoryId = trim((string) ($_POST['category_id'] ?? ''));
+        $supplierId = trim((string) ($_POST['supplier_id'] ?? ''));
+        $unit = trim((string) ($_POST['unit_of_measure'] ?? 'pcs'));
+        $reorderLevel = trim((string) ($_POST['reorder_level'] ?? '0'));
+        $price = trim((string) ($_POST['price'] ?? $_POST['cost_price'] ?? $_POST['sell_price'] ?? '0'));
+        $description = trim((string) ($_POST['description'] ?? ''));
+
+        if ($id === '' || !ctype_digit($id)) {
+            $this->redirect('/products?error=' . rawurlencode('Invalid product selected.'));
+        }
+
+        if ($sku === '' || $name === '') {
+            $this->redirectWithProductEditError((int) $id, 'SKU and Name are required.');
+        }
+
+        if ($reorderLevel !== '' && (!is_numeric($reorderLevel) || (float) $reorderLevel < 0)) {
+            $this->redirectWithProductEditError((int) $id, 'Reorder point must be 0 or higher.');
+        }
+
+        try {
+            $statement = $pdo->prepare(
+                'UPDATE products
+                 SET sku = :sku,
+                     name = :name,
+                     description = :description,
+                     category_id = :category_id,
+                     preferred_supplier_id = :supplier_id,
+                     unit_of_measure = :unit,
+                     cost_price = :cost_price,
+                     sell_price = :sell_price,
+                     reorder_level = :reorder_level,
+                     is_active = 1
+                 WHERE id = :id'
+            );
+            $statement->execute([
+                ':id' => (int) $id,
+                ':sku' => $sku,
+                ':name' => $name,
+                ':description' => $description !== '' ? $description : null,
+                ':category_id' => $categoryId !== '' ? (int) $categoryId : null,
+                ':supplier_id' => $supplierId !== '' ? (int) $supplierId : null,
+                ':unit' => $unit !== '' ? $unit : 'pcs',
+                ':cost_price' => is_numeric($price) ? (float) $price : 0.0,
+                ':sell_price' => is_numeric($price) ? (float) $price : 0.0,
+                ':reorder_level' => is_numeric($reorderLevel) ? (float) $reorderLevel : 0.0,
+            ]);
+        } catch (PDOException $exception) {
+            $this->redirectWithProductEditError((int) $id, 'Unable to update item. SKU may already exist.');
+        }
+
+        $this->redirect('/products?updated=1');
     }
 
     public function createCategory(): void
@@ -1576,7 +1660,7 @@ final class UiController
      * @param array<string, string> $filters
      * @return array<int, array<string, string|int>>
      */
-    private function productRows(PDO $pdo, array $filters = []): array
+    private function productRows(PDO $pdo, array $filters = [], int $page = 1, int $perPage = 20): array
     {
         $sumExpr = 'COALESCE(SUM(ib.quantity_on_hand), 0)';
         $sql = 'SELECT
@@ -1584,8 +1668,13 @@ final class UiController
                 p.name AS item_name,
                 COALESCE(c.name, "-") AS category_name,
                 p.sku,
+                p.description,
+                p.category_id,
+                p.preferred_supplier_id,
                 ' . $sumExpr . ' AS quantity_on_hand,
                 p.unit_of_measure,
+                COALESCE(p.cost_price, 0) AS cost_price,
+                COALESCE(p.sell_price, 0) AS sell_price,
                 COALESCE(p.reorder_level, 0) AS reorder_level,
                 COALESCE(s.company_name, "-") AS supplier_name,
                 CASE
@@ -1600,34 +1689,17 @@ final class UiController
              WHERE p.is_active = 1';
 
         $params = [];
-        $search = trim((string) ($filters['q'] ?? ''));
-        if ($search !== '') {
-            $sql .= ' AND (p.name LIKE :q OR p.sku LIKE :q OR c.name LIKE :q)';
-            $params[':q'] = '%' . $search . '%';
-        }
-
-        $categoryId = trim((string) ($filters['category_id'] ?? ''));
-        if ($categoryId !== '' && ctype_digit($categoryId)) {
-            $sql .= ' AND p.category_id = :category_id';
-            $params[':category_id'] = (int) $categoryId;
-        }
+        $this->appendProductFilters($sql, $params, $filters);
 
         $sql .= ' GROUP BY p.id, c.name, s.company_name';
 
-        $having = [];
-        $status = strtolower(trim((string) ($filters['status'] ?? '')));
-        if ($status === 'out') {
-            $having[] = $sumExpr . ' <= 0';
-        } elseif ($status === 'low') {
-            $having[] = $sumExpr . ' > 0 AND ' . $sumExpr . ' <= COALESCE(p.reorder_level, 0)';
-        } elseif ($status === 'in') {
-            $having[] = $sumExpr . ' > COALESCE(p.reorder_level, 0)';
+        $statusHaving = $this->productStatusHaving($sumExpr, $filters);
+        if ($statusHaving !== '') {
+            $sql .= ' HAVING ' . $statusHaving;
         }
-
-        if ($having !== []) {
-            $sql .= ' HAVING ' . implode(' AND ', $having);
-        }
-        $sql .= ' ORDER BY p.name ASC';
+        $offset = max(0, ($page - 1) * $perPage);
+        $limit = max(1, $perPage);
+        $sql .= ' ORDER BY p.name ASC LIMIT ' . $limit . ' OFFSET ' . $offset;
 
         $statement = $pdo->prepare($sql);
         $statement->execute($params);
@@ -1638,16 +1710,174 @@ final class UiController
                 'id' => (int) $row['id'],
                 'item' => (string) $row['item_name'],
                 'category' => (string) $row['category_name'],
+                'category_id' => $row['category_id'] !== null ? (int) $row['category_id'] : '',
                 'sku' => (string) $row['sku'],
+                'description' => (string) ($row['description'] ?? ''),
                 'qty' => number_format((float) $row['quantity_on_hand'], 0),
                 'unit' => (string) $row['unit_of_measure'],
                 'reorder' => number_format((float) $row['reorder_level'], 0),
                 'supplier' => (string) $row['supplier_name'],
+                'supplier_id' => $row['preferred_supplier_id'] !== null ? (int) $row['preferred_supplier_id'] : '',
+                'price' => number_format((float) $row['cost_price'], 2, '.', ''),
                 'status' => (string) $row['stock_status'],
             ];
         }
 
         return $rows;
+    }
+
+    /**
+     * @param array<string, string> $filters
+     */
+    private function productRowCount(PDO $pdo, array $filters = []): int
+    {
+        $sumExpr = 'COALESCE(SUM(ib.quantity_on_hand), 0)';
+        $sql = 'SELECT COUNT(*)
+            FROM (
+                SELECT p.id
+                FROM products p
+                LEFT JOIN categories c ON c.id = p.category_id
+                LEFT JOIN suppliers s ON s.id = p.preferred_supplier_id
+                LEFT JOIN inventory_balances ib ON ib.product_id = p.id
+                WHERE p.is_active = 1';
+
+        $params = [];
+        $this->appendProductFilters($sql, $params, $filters);
+        $sql .= ' GROUP BY p.id, p.reorder_level';
+
+        $statusHaving = $this->productStatusHaving($sumExpr, $filters);
+        if ($statusHaving !== '') {
+            $sql .= ' HAVING ' . $statusHaving;
+        }
+
+        $sql .= ') AS filtered_products';
+
+        $statement = $pdo->prepare($sql);
+        $statement->execute($params);
+
+        return (int) $statement->fetchColumn();
+    }
+
+    /**
+     * @param array<string, string> $filters
+     * @param array<string, mixed> $params
+     */
+    private function appendProductFilters(string &$sql, array &$params, array $filters): void
+    {
+        $search = trim((string) ($filters['q'] ?? ''));
+        if ($search !== '') {
+            $terms = preg_split('/\s+/', $search) ?: [];
+            foreach ($terms as $index => $term) {
+                $term = trim($term);
+                if ($term === '') {
+                    continue;
+                }
+
+                $nameParam = ':q' . $index . '_name';
+                $skuParam = ':q' . $index . '_sku';
+                $descriptionParam = ':q' . $index . '_description';
+                $categoryParam = ':q' . $index . '_category';
+                $supplierParam = ':q' . $index . '_supplier';
+                $unitParam = ':q' . $index . '_unit';
+                $sql .= ' AND (
+                    p.name LIKE ' . $nameParam . '
+                    OR p.sku LIKE ' . $skuParam . '
+                    OR COALESCE(p.description, "") LIKE ' . $descriptionParam . '
+                    OR COALESCE(c.name, "") LIKE ' . $categoryParam . '
+                    OR COALESCE(s.company_name, "") LIKE ' . $supplierParam . '
+                    OR p.unit_of_measure LIKE ' . $unitParam . '
+                )';
+                $likeTerm = '%' . $term . '%';
+                $params[$nameParam] = $likeTerm;
+                $params[$skuParam] = $likeTerm;
+                $params[$descriptionParam] = $likeTerm;
+                $params[$categoryParam] = $likeTerm;
+                $params[$supplierParam] = $likeTerm;
+                $params[$unitParam] = $likeTerm;
+            }
+        }
+
+        $categoryId = trim((string) ($filters['category_id'] ?? ''));
+        if ($categoryId !== '' && ctype_digit($categoryId)) {
+            $sql .= ' AND p.category_id = :category_id';
+            $params[':category_id'] = (int) $categoryId;
+        }
+    }
+
+    /**
+     * @param array<string, string> $filters
+     */
+    private function productStatusHaving(string $sumExpr, array $filters): string
+    {
+        $status = strtolower(trim((string) ($filters['status'] ?? '')));
+        if ($status === 'out') {
+            return $sumExpr . ' <= 0';
+        }
+        if ($status === 'low') {
+            return $sumExpr . ' > 0 AND ' . $sumExpr . ' <= COALESCE(p.reorder_level, 0)';
+        }
+        if ($status === 'in') {
+            return $sumExpr . ' > COALESCE(p.reorder_level, 0)';
+        }
+
+        return '';
+    }
+
+    /**
+     * @return array<string, string|int|float>|null
+     */
+    private function productDetail(PDO $pdo, int $id): ?array
+    {
+        $sumExpr = 'COALESCE(SUM(ib.quantity_on_hand), 0)';
+        $statement = $pdo->prepare(
+            'SELECT
+                p.id,
+                p.name,
+                p.sku,
+                p.description,
+                p.category_id,
+                COALESCE(c.name, "-") AS category_name,
+                p.preferred_supplier_id,
+                COALESCE(s.company_name, "-") AS supplier_name,
+                p.unit_of_measure,
+                COALESCE(p.cost_price, 0) AS cost_price,
+                COALESCE(p.reorder_level, 0) AS reorder_level,
+                ' . $sumExpr . ' AS quantity_on_hand,
+                CASE
+                    WHEN ' . $sumExpr . ' <= 0 THEN "Out of Stock"
+                    WHEN ' . $sumExpr . ' <= COALESCE(p.reorder_level, 0) THEN "Low Stock"
+                    ELSE "In Stock"
+                END AS stock_status
+             FROM products p
+             LEFT JOIN categories c ON c.id = p.category_id
+             LEFT JOIN suppliers s ON s.id = p.preferred_supplier_id
+             LEFT JOIN inventory_balances ib ON ib.product_id = p.id
+             WHERE p.id = :id AND p.is_active = 1
+             GROUP BY p.id, c.name, s.company_name
+             LIMIT 1'
+        );
+        $statement->execute([':id' => $id]);
+        $row = $statement->fetch(PDO::FETCH_ASSOC);
+
+        if ($row === false) {
+            return null;
+        }
+
+        return [
+            'id' => (int) $row['id'],
+            'name' => (string) $row['name'],
+            'sku' => (string) $row['sku'],
+            'description' => (string) ($row['description'] ?? ''),
+            'category_id' => $row['category_id'] !== null ? (int) $row['category_id'] : '',
+            'category_name' => (string) $row['category_name'],
+            'supplier_id' => $row['preferred_supplier_id'] !== null ? (int) $row['preferred_supplier_id'] : '',
+            'supplier_name' => (string) $row['supplier_name'],
+            'unit_of_measure' => (string) $row['unit_of_measure'],
+            'price' => number_format((float) $row['cost_price'], 2, '.', ''),
+            'reorder_level' => number_format((float) $row['reorder_level'], 0, '.', ''),
+            'quantity_on_hand' => number_format((float) $row['quantity_on_hand'], 0),
+            'status' => (string) $row['stock_status'],
+        ];
     }
 
     /**
@@ -2403,6 +2633,15 @@ final class UiController
     private function redirectWithProductFormError(string $message, array $fields): void
     {
         $query = http_build_query(array_merge(['error' => $message, 'openNewItem' => '1'], $fields));
+        $this->redirect('/products?' . $query);
+    }
+
+    private function redirectWithProductEditError(int $productId, string $message): void
+    {
+        $query = http_build_query([
+            'error' => $message,
+            'edit_product_id' => $productId,
+        ]);
         $this->redirect('/products?' . $query);
     }
 

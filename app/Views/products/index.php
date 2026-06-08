@@ -10,6 +10,9 @@ declare(strict_types=1);
 /** @var string|null $notice */
 /** @var string|null $errorMessage */
 /** @var bool $isModalOpen */
+/** @var array<string, string|int|float>|null $viewProduct */
+/** @var array<string, string|int|float>|null $editProduct */
+/** @var array{page:int,per_page:int,total_rows:int,total_pages:int} $pagination */
 /** @var array<int, array{id:int,name:string}> $categories */
 /** @var array<int, array{id:int,name:string}> $suppliers */
 /** @var array<string,string> $filters */
@@ -17,6 +20,29 @@ declare(strict_types=1);
 
 $buildUrl = static function (string $path): string {
     return function_exists('app_url') ? app_url($path) : $path;
+};
+$productUrl = static function (array $overrides = []) use ($buildUrl, $filters, $pagination): string {
+    $params = [
+        'q' => $filters['q'] ?? '',
+        'filter_category_id' => $filters['category_id'] ?? '',
+        'filter_status' => $filters['status'] ?? '',
+        'page' => (string) ($pagination['page'] ?? 1),
+    ];
+    foreach ($overrides as $key => $value) {
+        if ($value === null) {
+            unset($params[$key]);
+            continue;
+        }
+        $params[$key] = (string) $value;
+    }
+    foreach ($params as $key => $value) {
+        if ($value === '' || ($key === 'page' && $value === '1')) {
+            unset($params[$key]);
+        }
+    }
+    $query = $params !== [] ? '?' . http_build_query($params) : '';
+
+    return $buildUrl('/products' . $query);
 };
 ?>
 <style>
@@ -245,6 +271,39 @@ $buildUrl = static function (string $path): string {
         gap: 8px;
         margin-top: 12px;
     }
+    .detail-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 12px;
+    }
+    .detail-item {
+        border: 1px solid rgba(104, 151, 255, 0.18);
+        border-radius: 8px;
+        padding: 10px 12px;
+        background: rgba(11, 30, 56, 0.42);
+        min-width: 0;
+    }
+    .detail-item.full {
+        grid-column: 1 / -1;
+    }
+    .detail-label {
+        display: block;
+        color: #adc0dc;
+        font-size: 11px;
+        font-weight: 700;
+        margin-bottom: 5px;
+    }
+    .detail-value {
+        color: #f6f9ff;
+        font-size: 13px;
+        overflow-wrap: anywhere;
+    }
+    .page-btn.disabled {
+        opacity: 0.5;
+        cursor: default;
+        pointer-events: none;
+    }
     @media (max-width: 1100px) {
         .summary-grid {
             grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -278,7 +337,8 @@ $buildUrl = static function (string $path): string {
         }
     }
     @media (max-width: 800px) {
-        .modal-grid {
+        .modal-grid,
+        .detail-grid {
             grid-template-columns: 1fr;
         }
     }
@@ -394,8 +454,18 @@ $buildUrl = static function (string $path): string {
                                         title="Assign to employee"
                                         aria-label="Assign to employee"
                                     >↗</a>
-                                    <button class="icon-btn" type="button" title="View">👁</button>
-                                    <button class="icon-btn" type="button" title="Edit">✎</button>
+                                    <a
+                                        class="icon-btn"
+                                        href="<?= htmlspecialchars($productUrl(['view_product_id' => (int) $row['id'], 'edit_product_id' => null]), ENT_QUOTES, 'UTF-8') ?>"
+                                        title="View item"
+                                        aria-label="View item"
+                                    >👁</a>
+                                    <a
+                                        class="icon-btn"
+                                        href="<?= htmlspecialchars($productUrl(['edit_product_id' => (int) $row['id'], 'view_product_id' => null]), ENT_QUOTES, 'UTF-8') ?>"
+                                        title="Edit item"
+                                        aria-label="Edit item"
+                                    >✎</a>
                                 </div>
                             </td>
                         </tr>
@@ -405,14 +475,27 @@ $buildUrl = static function (string $path): string {
             </table>
         </div>
         <div class="pagination">
-            <span>Showing <?= count($tableRows) ?> items</span>
-            <div class="pagination-controls">
-                <button class="page-btn" type="button">Prev</button>
-                <button class="page-btn active" type="button">1</button>
-                <button class="page-btn" type="button">2</button>
-                <button class="page-btn" type="button">3</button>
-                <button class="page-btn" type="button">Next</button>
-            </div>
+            <?php
+            $currentPage = (int) ($pagination['page'] ?? 1);
+            $totalPages = (int) ($pagination['total_pages'] ?? 1);
+            $totalRows = (int) ($pagination['total_rows'] ?? count($tableRows));
+            $perPage = (int) ($pagination['per_page'] ?? 20);
+            $startRow = $totalRows > 0 ? (($currentPage - 1) * $perPage) + 1 : 0;
+            $endRow = min($totalRows, $currentPage * $perPage);
+            ?>
+            <span>Showing <?= $startRow ?>-<?= $endRow ?> of <?= $totalRows ?> items</span>
+            <?php if ($totalPages > 1): ?>
+                <div class="pagination-controls">
+                    <a class="page-btn<?= $currentPage <= 1 ? ' disabled' : '' ?>" href="<?= htmlspecialchars($productUrl(['page' => max(1, $currentPage - 1)]), ENT_QUOTES, 'UTF-8') ?>">Prev</a>
+                    <?php for ($pageNumber = 1; $pageNumber <= $totalPages; $pageNumber++): ?>
+                        <a
+                            class="page-btn<?= $pageNumber === $currentPage ? ' active' : '' ?>"
+                            href="<?= htmlspecialchars($productUrl(['page' => $pageNumber]), ENT_QUOTES, 'UTF-8') ?>"
+                        ><?= $pageNumber ?></a>
+                    <?php endfor; ?>
+                    <a class="page-btn<?= $currentPage >= $totalPages ? ' disabled' : '' ?>" href="<?= htmlspecialchars($productUrl(['page' => min($totalPages, $currentPage + 1)]), ENT_QUOTES, 'UTF-8') ?>">Next</a>
+                </div>
+            <?php endif; ?>
         </div>
     </article>
 </section>
@@ -479,6 +562,121 @@ $buildUrl = static function (string $path): string {
         </form>
     </article>
 </div>
+
+<?php if ($viewProduct !== null): ?>
+    <div class="modal-backdrop open" aria-hidden="false">
+        <article class="modal-card" role="dialog" aria-modal="true" aria-labelledby="viewItemTitle">
+            <h3 id="viewItemTitle" class="panel-title" style="font-size:20px; margin:0 0 6px;">
+                <?= htmlspecialchars((string) $viewProduct['name'], ENT_QUOTES, 'UTF-8') ?>
+            </h3>
+            <p class="panel-subtitle" style="margin-top:0;">
+                <?= htmlspecialchars((string) $viewProduct['sku'], ENT_QUOTES, 'UTF-8') ?>
+            </p>
+
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <span class="detail-label">Category</span>
+                    <span class="detail-value"><?= htmlspecialchars((string) $viewProduct['category_name'], ENT_QUOTES, 'UTF-8') ?></span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Status</span>
+                    <span class="detail-value"><?= htmlspecialchars((string) $viewProduct['status'], ENT_QUOTES, 'UTF-8') ?></span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Current Stock</span>
+                    <span class="detail-value"><?= htmlspecialchars((string) $viewProduct['quantity_on_hand'], ENT_QUOTES, 'UTF-8') ?> <?= htmlspecialchars((string) $viewProduct['unit_of_measure'], ENT_QUOTES, 'UTF-8') ?></span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Reorder Point</span>
+                    <span class="detail-value"><?= htmlspecialchars((string) $viewProduct['reorder_level'], ENT_QUOTES, 'UTF-8') ?></span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Supplier</span>
+                    <span class="detail-value"><?= htmlspecialchars((string) $viewProduct['supplier_name'], ENT_QUOTES, 'UTF-8') ?></span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Price</span>
+                    <span class="detail-value">PHP <?= htmlspecialchars((string) $viewProduct['price'], ENT_QUOTES, 'UTF-8') ?></span>
+                </div>
+                <div class="detail-item full">
+                    <span class="detail-label">Description</span>
+                    <span class="detail-value"><?= htmlspecialchars((string) ($viewProduct['description'] !== '' ? $viewProduct['description'] : '-'), ENT_QUOTES, 'UTF-8') ?></span>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <a class="btn btn-outline" href="<?= htmlspecialchars($productUrl(['view_product_id' => null]), ENT_QUOTES, 'UTF-8') ?>">Close</a>
+                <a class="btn" href="<?= htmlspecialchars($productUrl(['edit_product_id' => (int) $viewProduct['id'], 'view_product_id' => null]), ENT_QUOTES, 'UTF-8') ?>">Edit Item</a>
+            </div>
+        </article>
+    </div>
+<?php endif; ?>
+
+<?php if ($editProduct !== null): ?>
+    <div class="modal-backdrop open" aria-hidden="false">
+        <article class="modal-card" role="dialog" aria-modal="true" aria-labelledby="editItemTitle">
+            <h3 id="editItemTitle" class="panel-title" style="font-size:20px; margin:0 0 6px;">Edit Product</h3>
+            <p class="panel-subtitle" style="margin-top:0;">Update item details used in products, stock, and accountability records.</p>
+
+            <form method="post" action="<?= htmlspecialchars($buildUrl('/products/' . (int) $editProduct['id'] . '/update'), ENT_QUOTES, 'UTF-8') ?>" style="margin-top:12px;">
+                <input type="hidden" name="id" value="<?= (int) $editProduct['id'] ?>">
+                <div class="modal-grid">
+                    <label class="modal-field">
+                        <span class="modal-label">SKU *</span>
+                        <input class="modal-input" type="text" name="sku" required maxlength="60" value="<?= htmlspecialchars((string) $editProduct['sku'], ENT_QUOTES, 'UTF-8') ?>">
+                    </label>
+                    <label class="modal-field">
+                        <span class="modal-label">Name *</span>
+                        <input class="modal-input" type="text" name="name" required maxlength="191" value="<?= htmlspecialchars((string) $editProduct['name'], ENT_QUOTES, 'UTF-8') ?>">
+                    </label>
+                    <label class="modal-field">
+                        <span class="modal-label">Category</span>
+                        <select class="modal-select" name="category_id">
+                            <option value="">Select category</option>
+                            <?php foreach ($categories as $category): ?>
+                                <option value="<?= (int) $category['id'] ?>"<?= ((string) $editProduct['category_id'] === (string) $category['id']) ? ' selected' : '' ?>>
+                                    <?= htmlspecialchars($category['name'], ENT_QUOTES, 'UTF-8') ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </label>
+                    <label class="modal-field">
+                        <span class="modal-label">Supplier</span>
+                        <select class="modal-select" name="supplier_id">
+                            <option value="">Select supplier</option>
+                            <?php foreach ($suppliers as $supplier): ?>
+                                <option value="<?= (int) $supplier['id'] ?>"<?= ((string) $editProduct['supplier_id'] === (string) $supplier['id']) ? ' selected' : '' ?>>
+                                    <?= htmlspecialchars($supplier['name'], ENT_QUOTES, 'UTF-8') ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </label>
+                    <label class="modal-field">
+                        <span class="modal-label">Unit</span>
+                        <input class="modal-input" type="text" name="unit_of_measure" maxlength="20" value="<?= htmlspecialchars((string) $editProduct['unit_of_measure'], ENT_QUOTES, 'UTF-8') ?>">
+                    </label>
+                    <label class="modal-field">
+                        <span class="modal-label">Reorder Level</span>
+                        <input class="modal-input" type="number" step="0.001" min="0" name="reorder_level" value="<?= htmlspecialchars((string) $editProduct['reorder_level'], ENT_QUOTES, 'UTF-8') ?>">
+                    </label>
+                    <label class="modal-field">
+                        <span class="modal-label">Price</span>
+                        <input class="modal-input" type="number" step="0.01" min="0" name="price" value="<?= htmlspecialchars((string) $editProduct['price'], ENT_QUOTES, 'UTF-8') ?>">
+                    </label>
+                    <label class="modal-field full">
+                        <span class="modal-label">Description</span>
+                        <textarea class="modal-textarea" name="description"><?= htmlspecialchars((string) $editProduct['description'], ENT_QUOTES, 'UTF-8') ?></textarea>
+                    </label>
+                </div>
+
+                <div class="modal-actions">
+                    <a class="btn btn-outline" href="<?= htmlspecialchars($productUrl(['edit_product_id' => null]), ENT_QUOTES, 'UTF-8') ?>">Cancel</a>
+                    <button class="btn" type="submit">Save Changes</button>
+                </div>
+            </form>
+        </article>
+    </div>
+<?php endif; ?>
 
 <script>
 (() => {

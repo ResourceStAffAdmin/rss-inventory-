@@ -111,6 +111,10 @@ if ($handler === null && $method === 'GET' && preg_match('#^/users/(\d+)$#', $ur
     $handler = [App\Controllers\UiController::class, 'showEmployeeTransactions'];
     $_GET['id'] = $matches[1];
 }
+if ($handler === null && $method === 'POST' && preg_match('#^/products/(\d+)/update$#', $uri, $matches) === 1) {
+    $handler = [App\Controllers\UiController::class, 'updateProduct'];
+    $_POST['id'] = $matches[1];
+}
 if ($handler === null && $method === 'GET' && preg_match('#^/accountability/(\d+)/print$#', $uri, $matches) === 1) {
     $handler = [App\Controllers\UiController::class, 'printAccountability'];
     $_GET['id'] = $matches[1];

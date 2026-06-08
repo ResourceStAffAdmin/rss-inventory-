@@ -297,6 +297,7 @@ if ($authName !== '') {
         }
         .search-wrap {
             position: relative;
+            margin: 0;
         }
         .search-wrap svg {
             position: absolute;
@@ -841,11 +842,24 @@ if ($authName !== '') {
                 <?php endforeach; ?>
             </div>
             <div class="top-controls">
-                <label class="search-wrap">
-                    <span class="sr-only">Search</span>
+                <?php
+                $globalSearchValue = '';
+                if ($activeRoute === '/products' && isset($filters) && is_array($filters)) {
+                    $globalSearchValue = (string) ($filters['q'] ?? '');
+                }
+                ?>
+                <form class="search-wrap" method="get" action="<?= htmlspecialchars($buildUrl('/products'), ENT_QUOTES, 'UTF-8') ?>" role="search">
+                    <label class="sr-only" for="globalSearch">Search products</label>
                     <?= $iconSvgs['search'] ?>
-                    <input class="search" type="search" placeholder="Search anything here...">
-                </label>
+                    <input
+                        id="globalSearch"
+                        class="search"
+                        type="search"
+                        name="q"
+                        placeholder="Search products, SKU, category..."
+                        value="<?= htmlspecialchars($globalSearchValue, ENT_QUOTES, 'UTF-8') ?>"
+                    >
+                </form>
                 <span class="status-pill"><?= $iconSvgs['calendar'] ?><?= htmlspecialchars(date('D, d M'), ENT_QUOTES, 'UTF-8') ?></span>
                 <details class="settings-menu">
                     <summary class="status-pill settings" aria-label="Settings">
