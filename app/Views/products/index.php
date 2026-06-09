@@ -142,6 +142,9 @@ $productUrl = static function (array $overrides = []) use ($buildUrl, $filters, 
     .module-table .table-wrap {
         overflow-x: auto;
     }
+    .product-name {
+        font-weight: 700;
+    }
     .module-notice {
         margin-top: 8px;
         font-size: 12px;
@@ -423,7 +426,11 @@ $productUrl = static function (array $overrides = []) use ($buildUrl, $filters, 
                 <tbody>
                 <?php if ($tableRows === []): ?>
                     <tr>
-                        <td colspan="9" class="empty-state">No products yet. Add your first item to get started.</td>
+                        <td colspan="9" class="empty-state">
+                            <?= (($filters['q'] ?? '') !== '' || ($filters['category_id'] ?? '') !== '' || ($filters['status'] ?? '') !== '')
+                                ? 'No products match the selected filters.'
+                                : 'No products yet. Add your first item to get started.' ?>
+                        </td>
                     </tr>
                 <?php else: ?>
                     <?php foreach ($tableRows as $row): ?>
@@ -438,7 +445,7 @@ $productUrl = static function (array $overrides = []) use ($buildUrl, $filters, 
                         }
                         ?>
                         <tr>
-                            <td><?= htmlspecialchars((string) $row['item'], ENT_QUOTES, 'UTF-8') ?></td>
+                            <td class="product-name"><?= htmlspecialchars((string) $row['item'], ENT_QUOTES, 'UTF-8') ?></td>
                             <td><?= htmlspecialchars((string) $row['sku'], ENT_QUOTES, 'UTF-8') ?></td>
                             <td><?= htmlspecialchars((string) $row['category'], ENT_QUOTES, 'UTF-8') ?></td>
                             <td><?= htmlspecialchars((string) $row['qty'], ENT_QUOTES, 'UTF-8') ?></td>

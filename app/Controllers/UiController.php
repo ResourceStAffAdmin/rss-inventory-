@@ -1994,7 +1994,7 @@ final class UiController
      */
     private function productRows(PDO $pdo, array $filters = [], int $page = 1, int $perPage = 20): array
     {
-        $sumExpr = 'COALESCE(SUM(ib.quantity_on_hand), 0)';
+        $quantityExpr = 'COALESCE(ib.quantity_on_hand, 0)';
         $sql = 'SELECT
                 p.id,
                 p.name AS item_name,
@@ -2003,31 +2003,33 @@ final class UiController
                 p.description,
                 p.category_id,
                 p.preferred_supplier_id,
-                ' . $sumExpr . ' AS quantity_on_hand,
+                ' . $quantityExpr . ' AS quantity_on_hand,
                 p.unit_of_measure,
                 COALESCE(p.cost_price, 0) AS cost_price,
                 COALESCE(p.sell_price, 0) AS sell_price,
                 COALESCE(p.reorder_level, 0) AS reorder_level,
                 COALESCE(s.company_name, "-") AS supplier_name,
                 CASE
-                    WHEN ' . $sumExpr . ' <= 0 THEN "Out of Stock"
-                    WHEN ' . $sumExpr . ' <= COALESCE(p.reorder_level, 0) THEN "Low Stock"
+                    WHEN ' . $quantityExpr . ' <= 0 THEN "Out of Stock"
+                    WHEN ' . $quantityExpr . ' <= COALESCE(p.reorder_level, 0) THEN "Low Stock"
                     ELSE "In Stock"
                 END AS stock_status
              FROM products p
              LEFT JOIN categories c ON c.id = p.category_id
              LEFT JOIN suppliers s ON s.id = p.preferred_supplier_id
-             LEFT JOIN inventory_balances ib ON ib.product_id = p.id
+             LEFT JOIN (
+                SELECT product_id, SUM(quantity_on_hand) AS quantity_on_hand
+                FROM inventory_balances
+                GROUP BY product_id
+             ) ib ON ib.product_id = p.id
              WHERE p.is_active = 1';
 
         $params = [];
         $this->appendProductFilters($sql, $params, $filters);
 
-        $sql .= ' GROUP BY p.id, c.name, s.company_name';
-
-        $statusHaving = $this->productStatusHaving($sumExpr, $filters);
-        if ($statusHaving !== '') {
-            $sql .= ' HAVING ' . $statusHaving;
+        $statusCondition = $this->productStatusCondition($quantityExpr, $filters);
+        if ($statusCondition !== '') {
+            $sql .= ' AND ' . $statusCondition;
         }
         $offset = max(0, ($page - 1) * $perPage);
         $limit = max(1, $perPage);
@@ -2063,26 +2065,25 @@ final class UiController
      */
     private function productRowCount(PDO $pdo, array $filters = []): int
     {
-        $sumExpr = 'COALESCE(SUM(ib.quantity_on_hand), 0)';
+        $quantityExpr = 'COALESCE(ib.quantity_on_hand, 0)';
         $sql = 'SELECT COUNT(*)
-            FROM (
-                SELECT p.id
                 FROM products p
                 LEFT JOIN categories c ON c.id = p.category_id
                 LEFT JOIN suppliers s ON s.id = p.preferred_supplier_id
-                LEFT JOIN inventory_balances ib ON ib.product_id = p.id
+                LEFT JOIN (
+                    SELECT product_id, SUM(quantity_on_hand) AS quantity_on_hand
+                    FROM inventory_balances
+                    GROUP BY product_id
+                ) ib ON ib.product_id = p.id
                 WHERE p.is_active = 1';
 
         $params = [];
         $this->appendProductFilters($sql, $params, $filters);
-        $sql .= ' GROUP BY p.id, p.reorder_level';
 
-        $statusHaving = $this->productStatusHaving($sumExpr, $filters);
-        if ($statusHaving !== '') {
-            $sql .= ' HAVING ' . $statusHaving;
+        $statusCondition = $this->productStatusCondition($quantityExpr, $filters);
+        if ($statusCondition !== '') {
+            $sql .= ' AND ' . $statusCondition;
         }
-
-        $sql .= ') AS filtered_products';
 
         $statement = $pdo->prepare($sql);
         $statement->execute($params);
@@ -2106,6 +2107,7 @@ final class UiController
                 }
 
                 $nameParam = ':q' . $index . '_name';
+                $idParam = ':q' . $index . '_id';
                 $skuParam = ':q' . $index . '_sku';
                 $descriptionParam = ':q' . $index . '_description';
                 $categoryParam = ':q' . $index . '_category';
@@ -2113,6 +2115,7 @@ final class UiController
                 $unitParam = ':q' . $index . '_unit';
                 $sql .= ' AND (
                     p.name LIKE ' . $nameParam . '
+                    OR CAST(p.id AS CHAR) LIKE ' . $idParam . '
                     OR p.sku LIKE ' . $skuParam . '
                     OR COALESCE(p.description, "") LIKE ' . $descriptionParam . '
                     OR COALESCE(c.name, "") LIKE ' . $categoryParam . '
@@ -2121,6 +2124,7 @@ final class UiController
                 )';
                 $likeTerm = '%' . $term . '%';
                 $params[$nameParam] = $likeTerm;
+                $params[$idParam] = $likeTerm;
                 $params[$skuParam] = $likeTerm;
                 $params[$descriptionParam] = $likeTerm;
                 $params[$categoryParam] = $likeTerm;
@@ -2139,17 +2143,17 @@ final class UiController
     /**
      * @param array<string, string> $filters
      */
-    private function productStatusHaving(string $sumExpr, array $filters): string
+    private function productStatusCondition(string $quantityExpr, array $filters): string
     {
         $status = strtolower(trim((string) ($filters['status'] ?? '')));
         if ($status === 'out') {
-            return $sumExpr . ' <= 0';
+            return $quantityExpr . ' <= 0';
         }
         if ($status === 'low') {
-            return $sumExpr . ' > 0 AND ' . $sumExpr . ' <= COALESCE(p.reorder_level, 0)';
+            return $quantityExpr . ' > 0 AND ' . $quantityExpr . ' <= COALESCE(p.reorder_level, 0)';
         }
         if ($status === 'in') {
-            return $sumExpr . ' > COALESCE(p.reorder_level, 0)';
+            return $quantityExpr . ' > COALESCE(p.reorder_level, 0)';
         }
 
         return '';
