@@ -1315,6 +1315,8 @@ final class UiController
     public function newAccountability(): void
     {
         $pdo = Database::connection();
+        $this->ensureAccountabilityAttachmentColumns($pdo);
+
         $prefillProductId = trim((string) ($_GET['product_id'] ?? ''));
         $prefillItem = null;
         $selectedEmployee = null;
@@ -1345,11 +1347,13 @@ final class UiController
     public function createAccountability(): void
     {
         $pdo = Database::connection();
+        $this->ensureAccountabilityAttachmentColumns($pdo);
 
         $employeeId = trim((string) ($_POST['employee_id'] ?? ''));
         $assignedDate = trim((string) ($_POST['assigned_date'] ?? ''));
         $returnedDate = trim((string) ($_POST['returned_date'] ?? ''));
         $notes = trim((string) ($_POST['notes'] ?? ''));
+        $attachment = null;
 
         if ($employeeId === '' || !ctype_digit($employeeId)) {
             $this->redirectWithAccountabilityError('Select an active employee.', [
@@ -1399,12 +1403,42 @@ final class UiController
             ]);
         }
 
+        try {
+            $attachment = $this->uploadedAccountabilityAttachment();
+        } catch (\RuntimeException $exception) {
+            $this->redirectWithAccountabilityError($exception->getMessage(), [
+                'employee_id' => $employeeId,
+                'assigned_date' => $assignedDate,
+                'returned_date' => $returnedDate,
+                'notes' => $notes,
+            ]);
+        }
+
         $pdo->beginTransaction();
 
         try {
             $assignmentStatement = $pdo->prepare(
-                'INSERT INTO asset_assignments (employee_id, assigned_date, returned_date, status, notes)
-                 VALUES (:employee_id, :assigned_date, :returned_date, :status, :notes)'
+                'INSERT INTO asset_assignments (
+                    employee_id,
+                    assigned_date,
+                    returned_date,
+                    status,
+                    notes,
+                    attachment_path,
+                    attachment_name,
+                    attachment_mime,
+                    attachment_size
+                ) VALUES (
+                    :employee_id,
+                    :assigned_date,
+                    :returned_date,
+                    :status,
+                    :notes,
+                    :attachment_path,
+                    :attachment_name,
+                    :attachment_mime,
+                    :attachment_size
+                )'
             );
             $assignmentStatement->execute([
                 ':employee_id' => (int) $employeeId,
@@ -1412,6 +1446,10 @@ final class UiController
                 ':returned_date' => $returnedDate !== '' ? $returnedDate : null,
                 ':status' => $returnedDate !== '' ? 'RETURNED' : 'ACTIVE',
                 ':notes' => $notes !== '' ? $notes : null,
+                ':attachment_path' => $attachment['path'] ?? null,
+                ':attachment_name' => $attachment['name'] ?? null,
+                ':attachment_mime' => $attachment['mime'] ?? null,
+                ':attachment_size' => $attachment['size'] ?? null,
             ]);
 
             $assignmentId = (int) $pdo->lastInsertId();
@@ -1453,6 +1491,9 @@ final class UiController
             $pdo->commit();
         } catch (PDOException $exception) {
             $pdo->rollBack();
+            if ($attachment !== null) {
+                $this->deletePublicUpload((string) $attachment['path']);
+            }
             $debug = filter_var((string) getenv('APP_DEBUG'), FILTER_VALIDATE_BOOL);
             $message = $debug ? 'Unable to save assignment. ' . $exception->getMessage() : 'Unable to save assignment.';
             $this->redirectWithAccountabilityError($message, [
@@ -1469,6 +1510,8 @@ final class UiController
     public function showAccountability(): void
     {
         $pdo = Database::connection();
+        $this->ensureAccountabilityAttachmentColumns($pdo);
+
         $id = (int) ($_GET['id'] ?? 0);
         $assignment = $this->assetAssignment($pdo, $id);
 
@@ -1490,6 +1533,8 @@ final class UiController
     public function printAccountability(): void
     {
         $pdo = Database::connection();
+        $this->ensureAccountabilityAttachmentColumns($pdo);
+
         $id = (int) ($_GET['id'] ?? 0);
         $assignment = $this->assetAssignment($pdo, $id);
 
@@ -1590,6 +1635,10 @@ final class UiController
                 aa.returned_date,
                 aa.status,
                 aa.notes,
+                aa.attachment_path,
+                aa.attachment_name,
+                aa.attachment_mime,
+                aa.attachment_size,
                 e.fname,
                 e.lname,
                 e.email,
@@ -1617,6 +1666,10 @@ final class UiController
             'returned_date' => (string) ($row['returned_date'] ?? ''),
             'status' => (string) $row['status'],
             'notes' => (string) ($row['notes'] ?? ''),
+            'attachment_path' => (string) ($row['attachment_path'] ?? ''),
+            'attachment_name' => (string) ($row['attachment_name'] ?? ''),
+            'attachment_mime' => (string) ($row['attachment_mime'] ?? ''),
+            'attachment_size' => $row['attachment_size'] !== null ? (int) $row['attachment_size'] : 0,
         ];
     }
 
@@ -1657,6 +1710,130 @@ final class UiController
         }
 
         return $items;
+    }
+
+    private function ensureAccountabilityAttachmentColumns(PDO $pdo): void
+    {
+        static $checked = false;
+        if ($checked) {
+            return;
+        }
+
+        $statement = $pdo->prepare(
+            'SELECT COUNT(*)
+             FROM INFORMATION_SCHEMA.COLUMNS
+             WHERE TABLE_SCHEMA = DATABASE()
+               AND TABLE_NAME = "asset_assignments"
+               AND COLUMN_NAME = "attachment_path"'
+        );
+        $statement->execute();
+        if ((int) $statement->fetchColumn() > 0) {
+            $checked = true;
+            return;
+        }
+
+        $pdo->exec(
+            'ALTER TABLE asset_assignments
+                ADD COLUMN attachment_path VARCHAR(255) NULL AFTER notes,
+                ADD COLUMN attachment_name VARCHAR(255) NULL AFTER attachment_path,
+                ADD COLUMN attachment_mime VARCHAR(120) NULL AFTER attachment_name,
+                ADD COLUMN attachment_size BIGINT UNSIGNED NULL AFTER attachment_mime'
+        );
+        $checked = true;
+    }
+
+    /**
+     * @return array{path:string,name:string,mime:string,size:int}|null
+     */
+    private function uploadedAccountabilityAttachment(): ?array
+    {
+        if (!isset($_FILES['attachment']) || !is_array($_FILES['attachment'])) {
+            return null;
+        }
+
+        $file = $_FILES['attachment'];
+        $error = (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE);
+        if ($error === UPLOAD_ERR_NO_FILE) {
+            return null;
+        }
+        if ($error !== UPLOAD_ERR_OK) {
+            throw new \RuntimeException('Unable to upload attachment. Please try a smaller file.');
+        }
+
+        $tmpName = (string) ($file['tmp_name'] ?? '');
+        $originalName = trim((string) ($file['name'] ?? ''));
+        $size = (int) ($file['size'] ?? 0);
+        if ($tmpName === '' || !is_uploaded_file($tmpName)) {
+            throw new \RuntimeException('Attachment upload was not received.');
+        }
+        if ($size <= 0 || $size > 10 * 1024 * 1024) {
+            throw new \RuntimeException('Attachment must be 10 MB or smaller.');
+        }
+
+        $extension = strtolower((string) pathinfo($originalName, PATHINFO_EXTENSION));
+        $allowedExtensions = ['pdf', 'jpg', 'jpeg', 'png', 'webp'];
+        if (!in_array($extension, $allowedExtensions, true)) {
+            throw new \RuntimeException('Attachment must be a PDF, JPG, PNG, or WebP file.');
+        }
+
+        $mimeByExtension = [
+            'pdf' => 'application/pdf',
+            'jpg' => 'image/jpeg',
+            'jpeg' => 'image/jpeg',
+            'png' => 'image/png',
+            'webp' => 'image/webp',
+        ];
+        $mime = $mimeByExtension[$extension] ?? 'application/octet-stream';
+        if (function_exists('finfo_open')) {
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            if ($finfo !== false) {
+                $detectedMime = finfo_file($finfo, $tmpName);
+                finfo_close($finfo);
+                if (is_string($detectedMime) && $detectedMime !== '') {
+                    $mime = $detectedMime;
+                }
+            }
+        }
+
+        $allowedMimes = [
+            'application/pdf',
+            'image/jpeg',
+            'image/png',
+            'image/webp',
+        ];
+        if (!in_array($mime, $allowedMimes, true)) {
+            throw new \RuntimeException('Attachment file type is not allowed.');
+        }
+
+        $targetDir = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'accountability';
+        if (!is_dir($targetDir) && !mkdir($targetDir, 0755, true) && !is_dir($targetDir)) {
+            throw new \RuntimeException('Unable to prepare attachment upload folder.');
+        }
+
+        $safeName = 'assignment_' . date('YmdHis') . '_' . bin2hex(random_bytes(6)) . '.' . $extension;
+        $targetPath = $targetDir . DIRECTORY_SEPARATOR . $safeName;
+        if (!move_uploaded_file($tmpName, $targetPath)) {
+            throw new \RuntimeException('Unable to save attachment.');
+        }
+
+        return [
+            'path' => '/uploads/accountability/' . $safeName,
+            'name' => $originalName !== '' ? basename($originalName) : $safeName,
+            'mime' => $mime,
+            'size' => $size,
+        ];
+    }
+
+    private function deletePublicUpload(string $publicPath): void
+    {
+        if ($publicPath === '' || !str_starts_with($publicPath, '/uploads/accountability/')) {
+            return;
+        }
+
+        $absolutePath = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'public' . str_replace('/', DIRECTORY_SEPARATOR, $publicPath);
+        if (is_file($absolutePath)) {
+            unlink($absolutePath);
+        }
     }
 
     /**

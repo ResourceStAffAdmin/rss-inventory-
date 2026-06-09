@@ -40,6 +40,7 @@ $selectedEmployeeMeta = $selectedEmployee !== null ? $selectedEmployee['meta'] :
         font-weight: 700;
     }
     .field input,
+    .field input[type="file"],
     .field select,
     .field textarea,
     .item-row input,
@@ -61,6 +62,20 @@ $selectedEmployeeMeta = $selectedEmployee !== null ? $selectedEmployee['meta'] :
     .field textarea {
         min-height: 84px;
         resize: vertical;
+    }
+    .field-hint {
+        color: #7890ba;
+        font-size: 11px;
+        line-height: 1.35;
+    }
+    .file-input::file-selector-button {
+        border: 1px solid rgba(104, 151, 255, 0.35);
+        border-radius: 8px;
+        background: rgba(47, 120, 255, 0.18);
+        color: #dbe8ff;
+        padding: 7px 10px;
+        margin-right: 10px;
+        cursor: pointer;
     }
     .module-error {
         font-size: 12px;
@@ -171,7 +186,7 @@ $selectedEmployeeMeta = $selectedEmployee !== null ? $selectedEmployee['meta'] :
     }
 </style>
 
-<form class="assignment-form" method="post" action="<?= htmlspecialchars($buildUrl('/accountability'), ENT_QUOTES, 'UTF-8') ?>" autocomplete="off">
+<form class="assignment-form" method="post" action="<?= htmlspecialchars($buildUrl('/accountability'), ENT_QUOTES, 'UTF-8') ?>" enctype="multipart/form-data" autocomplete="off">
     <article class="ui-panel">
         <div style="display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; align-items:flex-start;">
             <div>
@@ -211,6 +226,11 @@ $selectedEmployeeMeta = $selectedEmployee !== null ? $selectedEmployee['meta'] :
             <label class="field full">
                 <span>Notes</span>
                 <textarea name="notes"><?= htmlspecialchars($formValues['notes'] ?? '', ENT_QUOTES, 'UTF-8') ?></textarea>
+            </label>
+            <label class="field full">
+                <span>Attachment File</span>
+                <input class="file-input" type="file" name="attachment" accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp">
+                <small class="field-hint">Optional proof or signed document. PDF, JPG, PNG, or WebP up to 10 MB.</small>
             </label>
         </div>
     </article>

@@ -32,13 +32,26 @@ $categoryUrl = static function (array $overrides = []) use ($buildUrl, $filters)
 };
 $categoryIcon = static function (string $name): string {
     $normalized = strtolower($name);
+    $categoryIcons = [
+        'accessories' => 'accessories.png',
+        'cables & adapters' => 'cables-adapters.png',
+        'computers' => 'computers.png',
+        'displays' => 'displays.png',
+        'peripherals' => 'peripherals.png',
+        'power & network' => 'power-network.png',
+    ];
+
+    if (isset($categoryIcons[$normalized])) {
+        return $categoryIcons[$normalized];
+    }
+
     $iconKeywords = [
-        'monitor.svg' => ['monitor', 'display', 'screen'],
-        'cable.svg' => ['cable', 'adapter', 'connector'],
-        'networking.svg' => ['network', 'router', 'switch', 'wifi'],
-        'peripheral.svg' => ['peripheral', 'keyboard', 'mouse', 'input'],
-        'storage.svg' => ['storage', 'drive', 'disk'],
-        'accessory.svg' => ['accessor', 'stand', 'hub', 'organizer'],
+        'displays.png' => ['monitor', 'display', 'screen'],
+        'cables-adapters.png' => ['cable', 'adapter', 'connector'],
+        'power-network.png' => ['network', 'router', 'switch', 'wifi', 'power', 'ups'],
+        'peripherals.png' => ['peripheral', 'keyboard', 'mouse', 'input', 'headset', 'webcam'],
+        'computers.png' => ['computer', 'laptop', 'desktop', 'pc'],
+        'accessories.png' => ['accessor', 'bag', 'hub', 'organizer'],
     ];
 
     foreach ($iconKeywords as $icon => $keywords) {
@@ -49,7 +62,7 @@ $categoryIcon = static function (string $name): string {
         }
     }
 
-    return 'inventory.svg';
+    return 'accessories.png';
 };
 ?>
 <style>
@@ -125,19 +138,19 @@ $categoryIcon = static function (string $name): string {
     .category-cell {
         display: inline-flex;
         align-items: center;
-        gap: 10px;
-        min-height: 42px;
+        gap: 14px;
+        min-height: 72px;
         white-space: nowrap;
     }
     .category-art {
-        width: 40px;
-        height: 40px;
-        border: 1px solid #dbe7f5;
-        border-radius: 10px;
-        background: #f7fbff;
-        object-fit: contain;
-        flex: 0 0 40px;
-        box-shadow: 0 5px 12px rgba(15, 23, 42, 0.08);
+        width: 64px;
+        height: 64px;
+        border: 1px solid rgba(104, 151, 255, 0.32);
+        border-radius: 16px;
+        background: rgba(11, 30, 56, 0.78);
+        object-fit: cover;
+        flex: 0 0 64px;
+        box-shadow: 0 10px 24px rgba(2, 12, 28, 0.24);
     }
     .category-name {
         font-weight: 600;

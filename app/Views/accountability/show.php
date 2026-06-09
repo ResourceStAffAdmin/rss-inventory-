@@ -9,7 +9,17 @@ declare(strict_types=1);
 $buildUrl = static function (string $path): string {
     return function_exists('app_url') ? app_url($path) : $path;
 };
+$formatBytes = static function (int $bytes): string {
+    if ($bytes <= 0) {
+        return '';
+    }
+    if ($bytes >= 1048576) {
+        return number_format($bytes / 1048576, 1) . ' MB';
+    }
+    return number_format($bytes / 1024, 1) . ' KB';
+};
 $isReturned = (string) $assignment['status'] === 'RETURNED';
+$hasAttachment = ((string) ($assignment['attachment_path'] ?? '')) !== '';
 ?>
 <style>
     .detail-shell {
@@ -34,21 +44,50 @@ $isReturned = (string) $assignment['status'] === 'RETURNED';
         gap: 10px;
     }
     .meta-box {
-        border: 1px solid #e7edf4;
+        border: 1px solid rgba(104, 151, 255, 0.22);
         border-radius: 12px;
         padding: 12px;
-        background: #f8fafc;
+        background: rgba(11, 30, 56, 0.68);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
     }
     .meta-box .label {
-        color: #64748b;
+        color: #9db1d3;
         font-size: 11px;
         margin-bottom: 5px;
         font-weight: 700;
     }
     .meta-box .value {
-        color: #0f172a;
+        color: #eef5ff;
         font-size: 14px;
         font-weight: 700;
+    }
+    .attachment-panel {
+        margin-top: 12px;
+        border: 1px solid rgba(104, 151, 255, 0.22);
+        border-radius: 12px;
+        padding: 12px;
+        background: rgba(11, 30, 56, 0.68);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+    .attachment-panel .label {
+        color: #9db1d3;
+        font-size: 11px;
+        margin-bottom: 5px;
+        font-weight: 700;
+    }
+    .attachment-panel .value {
+        color: #eef5ff;
+        font-size: 14px;
+        font-weight: 700;
+    }
+    .attachment-panel .meta {
+        color: #9db1d3;
+        font-size: 12px;
+        margin-top: 3px;
     }
     .module-notice {
         width: 100%;
@@ -66,10 +105,13 @@ $isReturned = (string) $assignment['status'] === 'RETURNED';
         align-items: center;
     }
     .return-form input {
-        border: 1px solid #dce5ef;
+        border: 1px solid rgba(104, 151, 255, 0.22);
         border-radius: 999px;
         padding: 8px 10px;
         font-size: 12px;
+        background: rgba(11, 30, 56, 0.78);
+        color: #eef5ff;
+        color-scheme: dark;
     }
     @media (max-width: 1000px) {
         .meta-grid {
@@ -117,6 +159,21 @@ $isReturned = (string) $assignment['status'] === 'RETURNED';
                 <div class="value"><span class="badge <?= $isReturned ? 'neutral' : 'success' ?>"><?= htmlspecialchars($isReturned ? 'Returned' : 'Active', ENT_QUOTES, 'UTF-8') ?></span></div>
             </div>
         </div>
+        <?php if ($hasAttachment): ?>
+            <div class="attachment-panel">
+                <div>
+                    <div class="label">Attachment</div>
+                    <div class="value"><?= htmlspecialchars((string) ($assignment['attachment_name'] ?: 'Attached file'), ENT_QUOTES, 'UTF-8') ?></div>
+                    <div class="meta">
+                        <?= htmlspecialchars((string) ($assignment['attachment_mime'] ?: 'File'), ENT_QUOTES, 'UTF-8') ?>
+                        <?php if ((int) ($assignment['attachment_size'] ?? 0) > 0): ?>
+                            - <?= htmlspecialchars($formatBytes((int) $assignment['attachment_size']), ENT_QUOTES, 'UTF-8') ?>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <a class="btn btn-outline" href="<?= htmlspecialchars($buildUrl((string) $assignment['attachment_path']), ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener">Open Attachment</a>
+            </div>
+        <?php endif; ?>
         <?php if (!$isReturned): ?>
             <form class="return-form" method="post" action="<?= htmlspecialchars($buildUrl('/accountability/' . (int) $assignment['id'] . '/return'), ENT_QUOTES, 'UTF-8') ?>" style="margin-top:12px;">
                 <input type="date" name="returned_date" value="<?= htmlspecialchars(date('Y-m-d'), ENT_QUOTES, 'UTF-8') ?>" required>
