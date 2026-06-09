@@ -17,6 +17,21 @@ $kpiTone = static function (string $label): string {
         default => 'blue',
     };
 };
+$dashboardIcons = [
+    'Total Items' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2.8 8 4.4v9.6l-8 4.4-8-4.4V7.2l8-4.4Z"/><path d="m4.4 7.4 7.6 4.2 7.6-4.2"/><path d="M12 21.2v-9.6"/></svg>',
+    'Total Stock Value' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M6 9h.01M18 15h.01"/><circle cx="12" cy="12" r="3"/></svg>',
+    'Low Stock Items' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.6 2.4 17.2A2 2 0 0 0 4.1 20h15.8a2 2 0 0 0 1.7-2.8L13.7 3.6a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>',
+    'Out of Stock Items' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2.8 8 4.4v9.6l-8 4.4-8-4.4V7.2l8-4.4Z"/><path d="m4.4 7.4 7.6 4.2 7.6-4.2"/><path d="M12 11.6v9.6"/><path d="m9 14 6 6m0-6-6 6"/></svg>',
+    'Pending POs' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 3.5h6V6H9z"/><path d="M8.5 10h7M8.5 14h7M8.5 18h4"/></svg>',
+    'Pending Requests' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M3 4h2l2.3 10.2a2 2 0 0 0 2 1.6h7.9a2 2 0 0 0 2-1.6L21 8H7"/><path d="m14 5 2-2 2 2M16 3v7"/></svg>',
+];
+$quickActionIcons = [
+    'stock-in' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 14v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/></svg>',
+    'stock-out' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"/><path d="m7 8 5-5 5 5"/><path d="M4 14v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/></svg>',
+    'new-item' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2.8 8 4.4v9.6l-8 4.4-8-4.4V7.2l8-4.4Z"/><path d="m4.4 7.4 7.6 4.2 7.6-4.2"/><path d="M12 11.6v9.6"/><path d="M16.5 3.8v5M14 6.3h5"/></svg>',
+    'purchase-order' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M3 4h2l2.3 10.2a2 2 0 0 0 2 1.6h7.9a2 2 0 0 0 2-1.6L21 8H7"/><path d="M14 4h5M16.5 1.5v5"/></svg>',
+];
+$emptyStockIcon = '<svg viewBox="0 0 96 80" fill="none" aria-hidden="true"><path d="m18 24 30-15 30 15-30 15-30-15Z" fill="#36c9a0"/><path d="M18 24v31l30 16V39L18 24Z" fill="#168a72"/><path d="M78 24v31L48 71V39l30-15Z" fill="#28ad8b"/><circle cx="74" cy="57" r="14" fill="#42e58d"/><path d="m68 57 4 4 8-9" stroke="#063b32" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 ?>
 <style>
     .dashboard-layout {
@@ -41,8 +56,8 @@ $kpiTone = static function (string $label): string {
         overflow: hidden;
         padding: 24px;
         background:
-            linear-gradient(90deg, rgba(17, 44, 78, 0.98), rgba(18, 53, 94, 0.86)),
-            radial-gradient(circle at 90% 5%, rgba(47, 120, 255, 0.36), transparent 42%);
+            linear-gradient(90deg, rgba(7, 25, 47, 0.99), rgba(8, 31, 59, 0.9)),
+            radial-gradient(circle at 90% 5%, rgba(40, 119, 255, 0.22), transparent 42%);
     }
     .dashboard-hero::before,
     .dashboard-hero::after {
@@ -106,8 +121,8 @@ $kpiTone = static function (string $label): string {
         gap: 12px;
     }
     .kpi-card {
-        background: linear-gradient(180deg, rgba(18, 47, 84, 0.94), rgba(12, 35, 65, 0.94));
-        border: 1px solid rgba(132, 174, 255, 0.24);
+        background: linear-gradient(180deg, rgba(9, 27, 50, 0.98), rgba(5, 19, 37, 0.99));
+        border: 1px solid rgba(93, 137, 196, 0.2);
         border-radius: 10px;
         padding: 18px;
         min-height: 104px;
@@ -117,7 +132,7 @@ $kpiTone = static function (string $label): string {
         align-items: center;
         position: relative;
         overflow: hidden;
-        box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+        box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.025);
     }
     .kpi-icon {
         width: 42px;
@@ -129,9 +144,11 @@ $kpiTone = static function (string $label): string {
         color: #83adff;
         background: rgba(47, 120, 255, 0.16);
         border: 1px solid rgba(104, 151, 255, 0.22);
-        font-size: 16px;
-        font-weight: 800;
         flex-shrink: 0;
+    }
+    .kpi-icon svg {
+        width: 24px;
+        height: 24px;
     }
     .kpi-card.cyan .kpi-icon {
         color: #63eee9;
@@ -199,35 +216,15 @@ $kpiTone = static function (string $label): string {
         color: #adc0dc;
     }
     .empty-box {
-        width: 74px;
-        height: 68px;
+        width: 96px;
+        height: 80px;
         margin: 4px auto 12px;
-        position: relative;
-        border-radius: 12px;
-        background: linear-gradient(145deg, rgba(47, 120, 255, 0.62), rgba(47, 120, 255, 0.16));
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 18px 32px rgba(0, 0, 0, 0.2);
+        filter: drop-shadow(0 16px 24px rgba(0, 0, 0, 0.26));
     }
-    .empty-box::before {
-        content: "";
-        position: absolute;
-        left: 12px;
-        right: 12px;
-        top: -11px;
-        height: 22px;
-        border-radius: 8px 8px 2px 2px;
-        background: rgba(126, 168, 255, 0.38);
-        transform: skewX(-18deg);
-    }
-    .empty-box::after {
-        content: "";
-        position: absolute;
-        right: -8px;
-        top: 4px;
-        width: 24px;
-        height: 24px;
-        border-radius: 999px;
-        background: #39e47b;
-        box-shadow: 0 0 18px rgba(57, 228, 123, 0.55);
+    .empty-box svg {
+        display: block;
+        width: 100%;
+        height: 100%;
     }
     .empty-title {
         color: #f7fbff;
@@ -255,7 +252,7 @@ $kpiTone = static function (string $label): string {
         grid-template-columns: 38px 1fr;
         gap: 12px;
         align-items: center;
-        background: rgba(11, 30, 56, 0.54);
+        background: rgba(5, 19, 37, 0.9);
         transition: transform 0.2s ease, border-color 0.2s ease;
     }
     .quick-action:hover {
@@ -263,23 +260,33 @@ $kpiTone = static function (string $label): string {
         border-color: rgba(104, 151, 255, 0.38);
     }
     .quick-action.success {
-        background: linear-gradient(135deg, rgba(67, 230, 146, 0.65), rgba(11, 159, 104, 0.35));
+        background: linear-gradient(135deg, rgba(13, 107, 75, 0.72), rgba(7, 56, 49, 0.78));
         border-color: rgba(67, 230, 146, 0.34);
     }
     .quick-action.danger {
-        background: linear-gradient(135deg, rgba(255, 83, 104, 0.65), rgba(165, 15, 42, 0.38));
+        background: linear-gradient(135deg, rgba(132, 30, 54, 0.72), rgba(62, 15, 34, 0.82));
         border-color: rgba(255, 83, 104, 0.34);
     }
     .quick-action-icon {
         width: 38px;
         height: 38px;
-        border-radius: 999px;
+        border-radius: 9px;
         display: grid;
         place-items: center;
         border: 1px solid rgba(255, 255, 255, 0.24);
         background: rgba(255, 255, 255, 0.1);
-        font-size: 20px;
-        font-weight: 800;
+    }
+    .quick-action-icon svg {
+        width: 24px;
+        height: 24px;
+    }
+    .quick-action.blue {
+        background: linear-gradient(135deg, rgba(22, 72, 165, 0.7), rgba(7, 33, 81, 0.86));
+        border-color: rgba(54, 119, 255, 0.34);
+    }
+    .quick-action.violet {
+        background: linear-gradient(135deg, rgba(91, 45, 151, 0.72), rgba(43, 22, 78, 0.86));
+        border-color: rgba(163, 93, 255, 0.34);
     }
     .quick-action-title {
         display: block;
@@ -341,7 +348,7 @@ $kpiTone = static function (string $label): string {
             <?php foreach ($kpis as $kpi): ?>
                 <?php $tone = $kpiTone($kpi['label']); ?>
                 <article class="kpi-card <?= htmlspecialchars($tone, ENT_QUOTES, 'UTF-8') ?>">
-                    <span class="kpi-icon"><?= htmlspecialchars($kpi['icon'], ENT_QUOTES, 'UTF-8') ?></span>
+                    <span class="kpi-icon" aria-hidden="true"><?= $dashboardIcons[$kpi['label']] ?? $dashboardIcons['Total Items'] ?></span>
                     <div>
                         <div class="kpi-label"><?= htmlspecialchars($kpi['label'], ENT_QUOTES, 'UTF-8') ?></div>
                         <div class="kpi-value"><?= htmlspecialchars($kpi['value'], ENT_QUOTES, 'UTF-8') ?></div>
@@ -401,7 +408,7 @@ $kpiTone = static function (string $label): string {
             <?php if ($lowStockItems === []): ?>
                 <div class="empty-visual">
                     <div>
-                        <div class="empty-box" aria-hidden="true"></div>
+                        <div class="empty-box"><?= $emptyStockIcon ?></div>
                         <div class="empty-title">You're all caught up.</div>
                         <div>No low stock items.</div>
                     </div>
@@ -473,28 +480,28 @@ $kpiTone = static function (string $label): string {
             </div>
             <div class="quick-actions-grid">
                 <a class="quick-action success" href="<?= htmlspecialchars(app_url('/stock?open=stock-in'), ENT_QUOTES, 'UTF-8') ?>">
-                    <span class="quick-action-icon">+</span>
+                    <span class="quick-action-icon" aria-hidden="true"><?= $quickActionIcons['stock-in'] ?></span>
                     <span>
                         <span class="quick-action-title">Stock In</span>
                         <span class="quick-action-subtitle">Record incoming stock</span>
                     </span>
                 </a>
                 <a class="quick-action danger" href="<?= htmlspecialchars(app_url('/stock?open=stock-out'), ENT_QUOTES, 'UTF-8') ?>">
-                    <span class="quick-action-icon">-</span>
+                    <span class="quick-action-icon" aria-hidden="true"><?= $quickActionIcons['stock-out'] ?></span>
                     <span>
                         <span class="quick-action-title">Stock Out</span>
                         <span class="quick-action-subtitle">Record outgoing stock</span>
                     </span>
                 </a>
-                <a class="quick-action" href="<?= htmlspecialchars(app_url('/products?openNewItem=1'), ENT_QUOTES, 'UTF-8') ?>">
-                    <span class="quick-action-icon">+</span>
+                <a class="quick-action blue" href="<?= htmlspecialchars(app_url('/products?openNewItem=1'), ENT_QUOTES, 'UTF-8') ?>">
+                    <span class="quick-action-icon" aria-hidden="true"><?= $quickActionIcons['new-item'] ?></span>
                     <span>
                         <span class="quick-action-title">New Item</span>
                         <span class="quick-action-subtitle">Add a new item</span>
                     </span>
                 </a>
-                <a class="quick-action" href="<?= htmlspecialchars(app_url('/purchase-orders?openNewPo=1'), ENT_QUOTES, 'UTF-8') ?>">
-                    <span class="quick-action-icon">#</span>
+                <a class="quick-action violet" href="<?= htmlspecialchars(app_url('/purchase-orders?openNewPo=1'), ENT_QUOTES, 'UTF-8') ?>">
+                    <span class="quick-action-icon" aria-hidden="true"><?= $quickActionIcons['purchase-order'] ?></span>
                     <span>
                         <span class="quick-action-title">Create PO</span>
                         <span class="quick-action-subtitle">Create purchase order</span>

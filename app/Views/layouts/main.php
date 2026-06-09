@@ -46,6 +46,7 @@ $menuGroups = [
     ],
 ];
 $iconSvgs = [
+    'grid' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>',
     'dashboard' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3 10 9-7 9 7"/><path d="M5 10v10a1 1 0 0 0 1 1h4v-7h4v7h4a1 1 0 0 0 1-1V10"/></svg>',
     'package' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96 12 12.01l8.73-5.05"/><path d="M12 22V12"/></svg>',
     'tags' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41 12 4.83V2H2v10l8.59 8.59a2 2 0 0 0 2.82 0l7.18-7.18a2 2 0 0 0 0-2.82Z"/><path d="M7 7h.01"/></svg>',
@@ -87,21 +88,21 @@ if ($authName !== '') {
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
         :root {
-            --accent: #2f78ff;
-            --accent-strong: #1157d9;
-            --accent-soft: rgba(47, 120, 255, 0.18);
-            --cyan: #11d7cf;
-            --bg: #071426;
-            --card: #102844;
-            --card-strong: #14325a;
-            --text: #f6f9ff;
-            --muted: #adc0dc;
-            --muted-soft: #8298b9;
-            --border: rgba(132, 174, 255, 0.24);
+            --accent: #2877ff;
+            --accent-strong: #0e55d9;
+            --accent-soft: rgba(40, 119, 255, 0.16);
+            --cyan: #14d8cf;
+            --bg: #020916;
+            --card: #08182d;
+            --card-strong: #0c213d;
+            --text: #f3f7ff;
+            --muted: #9aabc6;
+            --muted-soft: #7185a5;
+            --border: rgba(93, 137, 196, 0.2);
             --success: #39e47b;
             --danger: #ff4c61;
             --warning: #ffb33e;
-            --shadow: 0 18px 42px rgba(0, 0, 0, 0.22);
+            --shadow: 0 18px 48px rgba(0, 0, 0, 0.38);
             --radius: 12px;
         }
         * {
@@ -111,13 +112,14 @@ if ($authName !== '') {
         html {
             min-height: 100%;
             background: var(--bg);
+            color-scheme: dark;
         }
         body {
             margin: 0;
             background:
-                radial-gradient(circle at 12% 0%, rgba(17, 215, 207, 0.16) 0%, transparent 32%),
-                radial-gradient(circle at 70% -10%, rgba(47, 120, 255, 0.32) 0%, transparent 40%),
-                linear-gradient(135deg, #071426 0%, #0b1e37 56%, #102a4a 100%);
+                radial-gradient(circle at 12% -8%, rgba(17, 215, 207, 0.08) 0%, transparent 30%),
+                radial-gradient(circle at 72% -14%, rgba(40, 119, 255, 0.16) 0%, transparent 38%),
+                linear-gradient(135deg, #020916 0%, #04101f 52%, #06172b 100%);
             color: var(--text);
             padding: 0;
         }
@@ -130,7 +132,7 @@ if ($authName !== '') {
             padding: 8px;
         }
         .sidebar {
-            background: linear-gradient(180deg, rgba(16, 40, 72, 0.96), rgba(10, 26, 49, 0.98));
+            background: linear-gradient(180deg, rgba(5, 17, 34, 0.98), rgba(2, 10, 22, 0.99));
             border: 1px solid var(--border);
             border-radius: var(--radius);
             padding: 14px 10px;
@@ -141,7 +143,7 @@ if ($authName !== '') {
             position: sticky;
             top: 8px;
             height: calc(100vh - 16px);
-            box-shadow: var(--shadow), inset 1px 0 0 rgba(255, 255, 255, 0.03);
+            box-shadow: var(--shadow), inset 1px 0 0 rgba(255, 255, 255, 0.02);
         }
         .brand {
             width: 100%;
@@ -182,7 +184,7 @@ if ($authName !== '') {
             height: 42px;
             border-radius: 8px;
             border: 1px solid transparent;
-            color: #b7c6e4;
+            color: #8fa2bf;
             text-decoration: none;
             display: inline-flex;
             align-items: center;
@@ -216,7 +218,7 @@ if ($authName !== '') {
         }
         .icon-link:hover,
         .icon-link.active {
-            background: linear-gradient(135deg, rgba(47, 120, 255, 0.95), rgba(15, 77, 190, 0.86));
+            background: linear-gradient(135deg, rgba(40, 119, 255, 0.92), rgba(12, 65, 164, 0.78));
             border-color: rgba(91, 147, 255, 0.55);
             color: #fff;
             box-shadow: 0 12px 24px rgba(47, 120, 255, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.12);
@@ -251,7 +253,7 @@ if ($authName !== '') {
             gap: 12px;
         }
         .topbar {
-            background: linear-gradient(180deg, rgba(17, 42, 76, 0.96), rgba(11, 30, 56, 0.96));
+            background: linear-gradient(180deg, rgba(7, 22, 42, 0.97), rgba(4, 15, 30, 0.98));
             border: 1px solid var(--border);
             border-radius: var(--radius);
             padding: 10px 14px;
@@ -270,13 +272,21 @@ if ($authName !== '') {
         }
         .top-tab {
             text-decoration: none;
-            color: #c6d5ed;
+            color: #9fb0ca;
             font-size: 11px;
             padding: 9px 17px;
             border-radius: 22px;
-            background: rgba(13, 34, 62, 0.72);
+            background: rgba(7, 23, 44, 0.72);
             border: 1px solid rgba(132, 174, 255, 0.16);
             transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+        }
+        .top-tab svg {
+            width: 15px;
+            height: 15px;
+            flex: 0 0 15px;
         }
         .top-tab.active {
             background: linear-gradient(135deg, #2f78ff, #145bd8);
@@ -318,7 +328,7 @@ if ($authName !== '') {
             font-size: 12px;
             color: #eef5ff;
             outline: none;
-            background: rgba(11, 30, 56, 0.76);
+            background: rgba(3, 14, 29, 0.86);
         }
         .search::placeholder {
             color: #8ba4d5;
@@ -333,7 +343,7 @@ if ($authName !== '') {
             font-size: 11px;
             color: #e2ebfb;
             padding: 9px 11px;
-            background: rgba(11, 30, 56, 0.66);
+            background: rgba(3, 14, 29, 0.82);
             white-space: nowrap;
             display: inline-flex;
             align-items: center;
@@ -512,11 +522,11 @@ if ($authName !== '') {
             animation: fadeIn 0.35s ease;
         }
         .ui-panel {
-            background: linear-gradient(180deg, rgba(18, 47, 84, 0.94), rgba(12, 35, 65, 0.94));
+            background: linear-gradient(180deg, rgba(9, 27, 50, 0.97), rgba(5, 19, 37, 0.98));
             border: 1px solid var(--border);
             border-radius: var(--radius);
             padding: 14px;
-            box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+            box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.025);
         }
         .panel-title {
             margin: 0;
@@ -824,11 +834,11 @@ if ($authName !== '') {
             <div class="top-tabs">
                 <?php
                 $topTabs = [
-                    ['path' => '/', 'label' => 'Dashboard'],
-                    ['path' => '/products', 'label' => 'Products'],
-                    ['path' => '/stock', 'label' => 'Stock'],
-                    ['path' => '/accountability', 'label' => 'Accountability'],
-                    ['path' => '/reports', 'label' => 'Reports'],
+                    ['path' => '/', 'label' => 'Dashboard', 'icon' => 'grid'],
+                    ['path' => '/products', 'label' => 'Products', 'icon' => 'package'],
+                    ['path' => '/stock', 'label' => 'Stock', 'icon' => 'arrows'],
+                    ['path' => '/accountability', 'label' => 'Accountability', 'icon' => 'clipboard'],
+                    ['path' => '/reports', 'label' => 'Reports', 'icon' => 'chart'],
                 ];
                 ?>
                 <?php foreach ($topTabs as $tab): ?>
@@ -837,6 +847,7 @@ if ($authName !== '') {
                         class="top-tab<?= $tabActive ? ' active' : '' ?>"
                         href="<?= htmlspecialchars($buildUrl($tab['path']), ENT_QUOTES, 'UTF-8') ?>"
                     >
+                        <span aria-hidden="true"><?= $iconSvgs[$tab['icon']] ?? '' ?></span>
                         <?= htmlspecialchars($tab['label'], ENT_QUOTES, 'UTF-8') ?>
                     </a>
                 <?php endforeach; ?>
@@ -915,7 +926,7 @@ if ($authName !== '') {
     }
     .module-filters,
     .users-search-form {
-        background: rgba(11, 30, 56, 0.58) !important;
+        background: rgba(3, 14, 29, 0.72) !important;
         border-color: rgba(104, 151, 255, 0.16) !important;
         border-radius: 10px !important;
     }
@@ -926,7 +937,7 @@ if ($authName !== '') {
     .modal-input,
     .modal-select,
     .modal-textarea {
-        background: rgba(11, 30, 56, 0.78) !important;
+        background: rgba(3, 14, 29, 0.86) !important;
         border-color: rgba(104, 151, 255, 0.2) !important;
         color: #e6eeff !important;
         border-radius: 8px !important;
@@ -940,12 +951,12 @@ if ($authName !== '') {
     }
     .module-select option,
     .modal-select option {
-        background: #102a4a;
+        background: #07172c;
         color: #e6eeff;
     }
     .summary-card,
     .kpi-box {
-        background: linear-gradient(180deg, rgba(18, 47, 84, 0.94), rgba(12, 35, 65, 0.94)) !important;
+        background: linear-gradient(180deg, rgba(9, 27, 50, 0.97), rgba(5, 19, 37, 0.98)) !important;
         border-color: rgba(104, 151, 255, 0.18) !important;
         border-radius: 12px !important;
         box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
@@ -971,6 +982,35 @@ if ($authName !== '') {
     .employee-link {
         color: #f6f9ff !important;
     }
+    .detail-item,
+    .meta-box {
+        background: rgba(3, 14, 29, 0.68) !important;
+        border-color: rgba(93, 137, 196, 0.18) !important;
+    }
+    .detail-label,
+    .meta-box .label {
+        color: #8fa2bf !important;
+    }
+    .detail-value,
+    .meta-box .value {
+        color: #edf4ff !important;
+    }
+    .product-results {
+        background: #07172c !important;
+        border-color: rgba(93, 137, 196, 0.24) !important;
+        box-shadow: 0 18px 38px rgba(0, 0, 0, 0.42) !important;
+    }
+    .product-option strong {
+        color: #edf4ff !important;
+    }
+    .product-option span,
+    .product-empty {
+        color: #8fa2bf !important;
+    }
+    .product-option:hover,
+    .product-option:focus {
+        background: rgba(40, 119, 255, 0.14) !important;
+    }
     .employee-link:hover,
     .panel-link {
         color: #6ea2ff !important;
@@ -980,7 +1020,7 @@ if ($authName !== '') {
         backdrop-filter: blur(12px);
     }
     .modal-card {
-        background: linear-gradient(180deg, #163a65, #102a4a) !important;
+        background: linear-gradient(180deg, #0c2748, #06172c) !important;
         border-color: rgba(104, 151, 255, 0.24) !important;
         border-radius: 12px !important;
         box-shadow: 0 30px 80px rgba(0, 0, 0, 0.48) !important;
@@ -990,7 +1030,7 @@ if ($authName !== '') {
     .link-btn,
     .inline-form button,
     .action-btn.alt {
-        background: rgba(11, 30, 56, 0.68) !important;
+        background: rgba(3, 14, 29, 0.78) !important;
         border-color: rgba(104, 151, 255, 0.2) !important;
         color: #c7d5f0 !important;
         border-radius: 8px !important;
