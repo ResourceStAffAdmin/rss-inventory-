@@ -856,7 +856,7 @@ if ($authName !== '') {
                         class="search"
                         type="search"
                         name="q"
-                        placeholder="Search products, SKU, category..."
+                        placeholder="Search products, Product ID, category..."
                         value="<?= htmlspecialchars($globalSearchValue, ENT_QUOTES, 'UTF-8') ?>"
                     >
                 </form>

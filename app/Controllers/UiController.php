@@ -126,10 +126,10 @@ final class UiController
             'pageTitle' => 'Products',
             'currentRoute' => '/products',
             'description' => 'Add, update, and track items with stock levels and reorder points.',
-            'tableHeaders' => ['Item', 'SKU', 'Category', 'Qty', 'Unit', 'Reorder Point', 'Supplier', 'Status', 'Actions'],
+            'tableHeaders' => ['Item', 'Product ID', 'Category', 'Qty', 'Unit', 'Reorder Point', 'Supplier', 'Status', 'Actions'],
             'tableRows' => $this->productRows($pdo, $filters, $page, $perPage),
             'moduleKpis' => $this->productsKpis($pdo),
-            'searchPlaceholder' => 'Search items or SKU...',
+            'searchPlaceholder' => 'Search items or Product ID...',
             'notice' => isset($_GET['created'])
                 ? 'New item saved successfully.'
                 : (isset($_GET['updated']) ? 'Item updated successfully.' : null),
@@ -178,7 +178,7 @@ final class UiController
         $description = trim((string) ($_POST['description'] ?? ''));
 
         if ($sku === '' || $name === '') {
-            $this->redirectWithProductFormError('SKU and Name are required.', [
+            $this->redirectWithProductFormError('Product ID and Name are required.', [
                 'sku' => $sku,
                 'name' => $name,
                 'category_id' => $categoryId,
@@ -242,7 +242,7 @@ final class UiController
                 ':reorder_level' => is_numeric($reorderLevel) ? (float) $reorderLevel : 0.0,
             ]);
         } catch (PDOException $exception) {
-            $this->redirectWithProductFormError('Unable to save item. SKU may already exist.', [
+            $this->redirectWithProductFormError('Unable to save item. Product ID may already exist.', [
                 'sku' => $sku,
                 'name' => $name,
                 'category_id' => $categoryId,
@@ -276,7 +276,7 @@ final class UiController
         }
 
         if ($sku === '' || $name === '') {
-            $this->redirectWithProductEditError((int) $id, 'SKU and Name are required.');
+            $this->redirectWithProductEditError((int) $id, 'Product ID and Name are required.');
         }
 
         if ($reorderLevel !== '' && (!is_numeric($reorderLevel) || (float) $reorderLevel < 0)) {
@@ -311,7 +311,7 @@ final class UiController
                 ':reorder_level' => is_numeric($reorderLevel) ? (float) $reorderLevel : 0.0,
             ]);
         } catch (PDOException $exception) {
-            $this->redirectWithProductEditError((int) $id, 'Unable to update item. SKU may already exist.');
+            $this->redirectWithProductEditError((int) $id, 'Unable to update item. Product ID may already exist.');
         }
 
         $this->redirect('/products?updated=1');
@@ -1175,7 +1175,7 @@ final class UiController
             pageTitle: 'Low Stock',
             currentRoute: '/low-stock',
             description: 'Monitor items below reorder level and prioritize restocking.',
-            tableHeaders: ['Item', 'SKU', 'Category', 'Qty', 'Reorder', 'Supplier', 'Status'],
+            tableHeaders: ['Item', 'Product ID', 'Category', 'Qty', 'Reorder', 'Supplier', 'Status'],
             tableRows: [],
             actions: [],
             moduleKpis: [],
@@ -3196,7 +3196,7 @@ final class UiController
         )->fetchColumn();
 
         return [
-            ['label' => 'Total Items', 'value' => number_format($totalItems), 'subtext' => 'All active SKUs', 'icon' => '▦'],
+            ['label' => 'Total Items', 'value' => number_format($totalItems), 'subtext' => 'All active Product IDs', 'icon' => '▦'],
             ['label' => 'Total Stock Value', 'value' => 'PHP ' . number_format($totalStockValue, 2), 'subtext' => 'Across all locations', 'icon' => '▤'],
             ['label' => 'Low Stock Items', 'value' => number_format($lowStockItems), 'subtext' => 'Below reorder point', 'icon' => '⚠'],
             ['label' => 'Out of Stock Items', 'value' => number_format($outOfStockItems), 'subtext' => 'Needs restock', 'icon' => '⛔'],

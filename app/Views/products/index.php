@@ -508,7 +508,7 @@ $productUrl = static function (array $overrides = []) use ($buildUrl, $filters, 
         <form method="post" action="<?= htmlspecialchars($buildUrl('/products'), ENT_QUOTES, 'UTF-8') ?>" style="margin-top:12px;">
             <div class="modal-grid">
                 <label class="modal-field">
-                    <span class="modal-label">SKU *</span>
+                    <span class="modal-label">Product ID *</span>
                     <input class="modal-input" type="text" name="sku" required maxlength="60" value="<?= htmlspecialchars($formValues['sku'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                 </label>
                 <label class="modal-field">
@@ -570,7 +570,7 @@ $productUrl = static function (array $overrides = []) use ($buildUrl, $filters, 
                 <?= htmlspecialchars((string) $viewProduct['name'], ENT_QUOTES, 'UTF-8') ?>
             </h3>
             <p class="panel-subtitle" style="margin-top:0;">
-                <?= htmlspecialchars((string) $viewProduct['sku'], ENT_QUOTES, 'UTF-8') ?>
+                Product ID: <?= htmlspecialchars((string) $viewProduct['sku'], ENT_QUOTES, 'UTF-8') ?>
             </p>
 
             <div class="detail-grid">
@@ -622,7 +622,7 @@ $productUrl = static function (array $overrides = []) use ($buildUrl, $filters, 
                 <input type="hidden" name="id" value="<?= (int) $editProduct['id'] ?>">
                 <div class="modal-grid">
                     <label class="modal-field">
-                        <span class="modal-label">SKU *</span>
+                        <span class="modal-label">Product ID *</span>
                         <input class="modal-input" type="text" name="sku" required maxlength="60" value="<?= htmlspecialchars((string) $editProduct['sku'], ENT_QUOTES, 'UTF-8') ?>">
                     </label>
                     <label class="modal-field">

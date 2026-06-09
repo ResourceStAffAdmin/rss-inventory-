@@ -100,7 +100,7 @@ $buildUrl = static function (string $path): string {
     <form method="post" action="<?= htmlspecialchars($buildUrl('/products'), ENT_QUOTES, 'UTF-8') ?>" style="margin-top:12px;">
         <div class="form-grid">
             <label class="form-field">
-                <span class="form-label">SKU *</span>
+                <span class="form-label">Product ID *</span>
                 <input class="form-input" type="text" name="sku" required maxlength="60" value="<?= htmlspecialchars($formValues['sku'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
             </label>
             <label class="form-field">

@@ -412,7 +412,7 @@ $kpiTone = static function (string $label): string {
                         <thead>
                         <tr>
                             <th>Item</th>
-                            <th>SKU</th>
+                            <th>Product ID</th>
                             <th>Qty</th>
                             <th>Reorder</th>
                         </tr>
@@ -442,7 +442,7 @@ $kpiTone = static function (string $label): string {
                     <thead>
                     <tr>
                         <th>Item</th>
-                        <th>SKU</th>
+                        <th>Product ID</th>
                         <th>Qty</th>
                         <th>Reorder</th>
                     </tr>
