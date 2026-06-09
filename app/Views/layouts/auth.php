@@ -23,6 +23,7 @@ declare(strict_types=1);
             --muted: #a9b5c8;
             --border: rgba(118, 166, 201, 0.26);
             --field: rgba(4, 23, 42, 0.72);
+            --viewport-scale: clamp(1, calc(100vw / 1920px), 6);
         }
 
         * {
@@ -85,6 +86,17 @@ declare(strict_types=1);
             min-height: 100vh;
             margin: 0 auto;
             padding: 58px 0;
+        }
+
+        /*
+         * Browser zoom-out increases the CSS viewport while shrinking fixed-size
+         * content. Scale the desktop canvas back up so it remains usable.
+         */
+        @media (min-width: 1921px) {
+            .auth-page {
+                min-height: calc(100vh / var(--viewport-scale));
+                zoom: var(--viewport-scale);
+            }
         }
 
         .auth-intro {
