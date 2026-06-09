@@ -1837,7 +1837,7 @@ final class UiController
     }
 
     /**
-     * @return array<int, array{id:int,label:string,description:string}>
+     * @return array<int, array{id:int,name:string,description:string}>
      */
     private function accountabilityProductOptions(PDO $pdo): array
     {
@@ -1845,14 +1845,13 @@ final class UiController
             'SELECT
                 p.id,
                 p.name,
-                p.sku,
                 COALESCE(c.name, "-") AS category_name,
                 COALESCE(SUM(ib.quantity_on_hand), 0) AS quantity_on_hand
              FROM products p
              LEFT JOIN categories c ON c.id = p.category_id
              LEFT JOIN inventory_balances ib ON ib.product_id = p.id
              WHERE p.is_active = 1
-             GROUP BY p.id, p.name, p.sku, c.name
+             GROUP BY p.id, p.name, c.name
              ORDER BY p.name ASC'
         );
 
@@ -1860,7 +1859,7 @@ final class UiController
         foreach ($statement->fetchAll(PDO::FETCH_ASSOC) as $row) {
             $products[] = [
                 'id' => (int) $row['id'],
-                'label' => (string) $row['name'] . ' (' . (string) $row['sku'] . ')',
+                'name' => (string) $row['name'],
                 'description' => (string) $row['category_name'] . ' - Qty: ' . number_format((float) $row['quantity_on_hand'], 0),
             ];
         }
@@ -2285,8 +2284,8 @@ final class UiController
                 m.reason,
                 m.reference_type,
                 m.reference_id,
+                p.id AS product_id,
                 p.name AS item_name,
-                p.sku,
                 COALESCE(u.full_name, "System") AS user_name
              FROM inventory_movements m
              INNER JOIN products p ON p.id = m.product_id
@@ -2306,7 +2305,7 @@ final class UiController
             'date' => (string) $row['moved_at'],
             'reference' => 'MOV-' . str_pad((string) $row['id'], 6, '0', STR_PAD_LEFT),
             'item' => (string) $row['item_name'],
-            'sku' => (string) ($row['sku'] ?? ''),
+            'product_id' => (int) $row['product_id'],
             'type' => $this->movementLabel((string) $row['movement_type']),
             'qty' => (float) $row['quantity'],
             'previous' => (float) ($row['previous_stock'] ?? 0),
@@ -2814,12 +2813,11 @@ final class UiController
      */
     private function productOptions(PDO $pdo): array
     {
-        $statement = $pdo->query('SELECT id, name, sku FROM products WHERE is_active = 1 ORDER BY name ASC');
+        $statement = $pdo->query('SELECT id, name FROM products WHERE is_active = 1 ORDER BY name ASC');
         return array_map(
             static fn (array $row): array => [
                 'id' => (int) $row['id'],
                 'name' => (string) $row['name'],
-                'sku' => (string) ($row['sku'] ?? ''),
             ],
             $statement->fetchAll(PDO::FETCH_ASSOC)
         );
@@ -2916,16 +2914,15 @@ final class UiController
     }
 
     /**
-     * @return array<int, array{id:int,name:string,sku:string,cost_price:string}>
+     * @return array<int, array{id:int,name:string,cost_price:string}>
      */
     private function purchaseOrderProductOptions(PDO $pdo): array
     {
-        $statement = $pdo->query('SELECT id, name, sku, cost_price FROM products WHERE is_active = 1 ORDER BY name ASC');
+        $statement = $pdo->query('SELECT id, name, cost_price FROM products WHERE is_active = 1 ORDER BY name ASC');
         return array_map(
             static fn (array $row): array => [
                 'id' => (int) $row['id'],
                 'name' => (string) $row['name'],
-                'sku' => (string) ($row['sku'] ?? ''),
                 'cost_price' => number_format((float) ($row['cost_price'] ?? 0), 2, '.', ''),
             ],
             $statement->fetchAll(PDO::FETCH_ASSOC)

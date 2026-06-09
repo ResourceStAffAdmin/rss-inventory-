@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-/** @var array<int, array{id:int,label:string,description:string}> $products */
+/** @var array<int, array{id:int,name:string,description:string}> $products */
 /** @var array{product_id:int,equipment_name:string,description:string}|null $prefillItem */
 /** @var array{id:int,name:string,meta:string}|null $selectedEmployee */
 /** @var string|null $errorMessage */
@@ -14,6 +14,15 @@ $buildUrl = static function (string $path): string {
 
 $selectedEmployeeName = $selectedEmployee !== null ? $selectedEmployee['name'] : '';
 $selectedEmployeeMeta = $selectedEmployee !== null ? $selectedEmployee['meta'] : '';
+$productById = static function (string $productId) use ($products): ?array {
+    foreach ($products as $product) {
+        if ((string) $product['id'] === $productId) {
+            return $product;
+        }
+    }
+
+    return null;
+};
 ?>
 <style>
     .assignment-form {
@@ -141,6 +150,55 @@ $selectedEmployeeMeta = $selectedEmployee !== null ? $selectedEmployee['meta'] :
         color: #9db1d3;
         font-size: 12px;
     }
+    .product-picker {
+        position: relative;
+        min-width: 0;
+    }
+    .product-results {
+        position: absolute;
+        top: calc(100% + 6px);
+        left: 0;
+        right: 0;
+        display: none;
+        background: #102a4a;
+        border: 1px solid rgba(104, 151, 255, 0.24);
+        border-radius: 14px;
+        box-shadow: 0 18px 30px rgba(15, 23, 42, 0.22);
+        max-height: 240px;
+        overflow-y: auto;
+        z-index: 20;
+    }
+    .product-results.open {
+        display: block;
+    }
+    .product-option {
+        width: 100%;
+        border: 0;
+        background: transparent;
+        text-align: left;
+        padding: 10px 12px;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+    }
+    .product-option:hover,
+    .product-option:focus {
+        background: rgba(47, 120, 255, 0.12);
+        outline: none;
+    }
+    .product-option strong {
+        color: #eef5ff;
+        font-size: 13px;
+    }
+    .product-option span,
+    .product-empty {
+        color: #9db1d3;
+        font-size: 11px;
+    }
+    .product-empty {
+        padding: 10px 12px;
+    }
     .items-header {
         display: flex;
         justify-content: space-between;
@@ -248,16 +306,14 @@ $selectedEmployeeMeta = $selectedEmployee !== null ? $selectedEmployee['meta'] :
                 <?php
                 $isPrefilled = $index === 0 && $prefillItem !== null;
                 $selectedProductId = $isPrefilled ? (string) $prefillItem['product_id'] : '';
+                $selectedProduct = $productById($selectedProductId);
                 ?>
                 <div class="item-row">
-                    <select name="item_product_id[]">
-                        <option value="">Linked product</option>
-                        <?php foreach ($products as $product): ?>
-                            <option value="<?= (int) $product['id'] ?>"<?= $selectedProductId === (string) $product['id'] ? ' selected' : '' ?>>
-                                <?= htmlspecialchars($product['label'] . ' - ' . $product['description'], ENT_QUOTES, 'UTF-8') ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
+                    <div class="product-picker">
+                        <input class="product-search" type="search" placeholder="Search product name or Product ID" autocomplete="off" value="<?= htmlspecialchars($selectedProduct !== null ? $selectedProduct['name'] . ' - Product ID: ' . $selectedProduct['id'] : '', ENT_QUOTES, 'UTF-8') ?>">
+                        <input class="product-id" type="hidden" name="item_product_id[]" value="<?= htmlspecialchars($selectedProductId, ENT_QUOTES, 'UTF-8') ?>">
+                        <div class="product-results" role="listbox" aria-label="Product search results"></div>
+                    </div>
                     <input type="text" name="item_equipment_name[]" placeholder="Equipment / Model / Brand<?= $index === 0 ? ' *' : '' ?>" value="<?= htmlspecialchars($isPrefilled ? $prefillItem['equipment_name'] : '', ENT_QUOTES, 'UTF-8') ?>"<?= $index === 0 ? ' required' : '' ?>>
                     <input type="text" name="item_description[]" placeholder="Description" value="<?= htmlspecialchars($isPrefilled ? $prefillItem['description'] : '', ENT_QUOTES, 'UTF-8') ?>">
                     <input type="text" name="item_serial_number[]" placeholder="Serial Number">
@@ -277,14 +333,11 @@ $selectedEmployeeMeta = $selectedEmployee !== null ? $selectedEmployee['meta'] :
 
 <template id="itemTemplate">
     <div class="item-row">
-        <select name="item_product_id[]">
-            <option value="">Linked product</option>
-            <?php foreach ($products as $product): ?>
-                <option value="<?= (int) $product['id'] ?>">
-                    <?= htmlspecialchars($product['label'] . ' - ' . $product['description'], ENT_QUOTES, 'UTF-8') ?>
-                </option>
-            <?php endforeach; ?>
-        </select>
+        <div class="product-picker">
+            <input class="product-search" type="search" placeholder="Search product name or Product ID" autocomplete="off">
+            <input class="product-id" type="hidden" name="item_product_id[]">
+            <div class="product-results" role="listbox" aria-label="Product search results"></div>
+        </div>
         <input type="text" name="item_equipment_name[]" placeholder="Equipment / Model / Brand">
         <input type="text" name="item_description[]" placeholder="Description">
         <input type="text" name="item_serial_number[]" placeholder="Serial Number">
@@ -296,6 +349,7 @@ $selectedEmployeeMeta = $selectedEmployee !== null ? $selectedEmployee['meta'] :
 
 <script>
 (() => {
+    const products = <?= json_encode($products, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
     const table = document.getElementById('itemsTable');
     const template = document.getElementById('itemTemplate');
     const addItem = document.getElementById('addItem');
@@ -304,9 +358,74 @@ $selectedEmployeeMeta = $selectedEmployee !== null ? $selectedEmployee['meta'] :
     const employeeMeta = document.getElementById('employeeMeta');
     const employeeResults = document.getElementById('employeeResults');
 
+    const closeProductResults = (picker) => {
+        const results = picker.querySelector('.product-results');
+        if (results) {
+            results.classList.remove('open');
+            results.innerHTML = '';
+        }
+    };
+
+    const bindProductPicker = (picker) => {
+        const search = picker.querySelector('.product-search');
+        const productId = picker.querySelector('.product-id');
+        const results = picker.querySelector('.product-results');
+        if (!search || !productId || !results) {
+            return;
+        }
+
+        const selectProduct = (product) => {
+            search.value = `${product.name} - Product ID: ${product.id}`;
+            productId.value = String(product.id);
+            closeProductResults(picker);
+        };
+
+        const renderResults = () => {
+            const query = productId.value !== '' ? '' : search.value.trim().toLowerCase();
+            const matches = products.filter((product) => (
+                query === ''
+                || product.name.toLowerCase().includes(query)
+                || String(product.id).includes(query)
+                || product.description.toLowerCase().includes(query)
+            )).slice(0, 30);
+
+            results.innerHTML = '';
+            if (matches.length === 0) {
+                const empty = document.createElement('div');
+                empty.className = 'product-empty';
+                empty.textContent = 'No matching products.';
+                results.appendChild(empty);
+            } else {
+                matches.forEach((product) => {
+                    const option = document.createElement('button');
+                    const name = document.createElement('strong');
+                    const meta = document.createElement('span');
+                    option.type = 'button';
+                    option.className = 'product-option';
+                    name.textContent = product.name;
+                    meta.textContent = `Product ID: ${product.id} - ${product.description}`;
+                    option.append(name, meta);
+                    option.addEventListener('click', () => selectProduct(product));
+                    results.appendChild(option);
+                });
+            }
+            results.classList.add('open');
+        };
+
+        search.addEventListener('input', () => {
+            productId.value = '';
+            renderResults();
+        });
+        search.addEventListener('focus', renderResults);
+    };
+
     if (table && template && addItem) {
+        table.querySelectorAll('.product-picker').forEach(bindProductPicker);
+
         addItem.addEventListener('click', () => {
-            table.appendChild(template.content.firstElementChild.cloneNode(true));
+            const row = template.content.firstElementChild.cloneNode(true);
+            bindProductPicker(row.querySelector('.product-picker'));
+            table.appendChild(row);
         });
 
         table.addEventListener('click', (event) => {
@@ -319,6 +438,14 @@ $selectedEmployeeMeta = $selectedEmployee !== null ? $selectedEmployee['meta'] :
                 return;
             }
             button.closest('.item-row').remove();
+        });
+
+        document.addEventListener('click', (event) => {
+            table.querySelectorAll('.product-picker').forEach((picker) => {
+                if (!picker.contains(event.target)) {
+                    closeProductResults(picker);
+                }
+            });
         });
     }
 

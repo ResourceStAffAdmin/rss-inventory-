@@ -5,7 +5,7 @@ declare(strict_types=1);
 /** @var array<int, array<string, string|int|float>> $movements */
 /** @var array<string,string|int|float>|null $viewMovement */
 /** @var array<string,string> $filters */
-/** @var array<int, array{id:int,name:string,sku:string}> $products */
+/** @var array<int, array{id:int,name:string}> $products */
 /** @var string|null $notice */
 /** @var string|null $errorMessage */
 /** @var string $openModal */
@@ -33,6 +33,15 @@ $stockUrl = static function (array $overrides = []) use ($buildUrl, $filters): s
 
     $query = http_build_query($params);
     return $buildUrl('/stock' . ($query !== '' ? '?' . $query : ''));
+};
+$selectedProductLabel = static function (string $productId) use ($products): string {
+    foreach ($products as $product) {
+        if ((string) $product['id'] === $productId) {
+            return $product['name'] . ' - Product ID: ' . $product['id'];
+        }
+    }
+
+    return '';
 };
 ?>
 <style>
@@ -202,6 +211,54 @@ $stockUrl = static function (array $overrides = []) use ($buildUrl, $filters): s
         min-height: 88px;
         resize: vertical;
     }
+    .product-picker {
+        position: relative;
+    }
+    .product-results {
+        position: absolute;
+        top: calc(100% + 6px);
+        left: 0;
+        right: 0;
+        display: none;
+        max-height: 230px;
+        overflow-y: auto;
+        background: #fff;
+        border: 1px solid #dce5ef;
+        border-radius: 10px;
+        box-shadow: 0 14px 30px rgba(15, 23, 42, 0.16);
+        z-index: 20;
+    }
+    .product-results.open {
+        display: block;
+    }
+    .product-option {
+        width: 100%;
+        border: 0;
+        background: transparent;
+        padding: 9px 11px;
+        text-align: left;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+    .product-option:hover,
+    .product-option:focus {
+        background: #eff6ff;
+        outline: none;
+    }
+    .product-option strong {
+        color: #0f172a;
+        font-size: 13px;
+    }
+    .product-option span,
+    .product-empty {
+        color: #64748b;
+        font-size: 11px;
+    }
+    .product-empty {
+        padding: 10px 12px;
+    }
     .modal-actions {
         display: flex;
         justify-content: flex-end;
@@ -362,7 +419,7 @@ $stockUrl = static function (array $overrides = []) use ($buildUrl, $filters): s
                 </div>
                 <div class="detail-item full">
                     <span class="detail-label">Item</span>
-                    <span class="detail-value"><?= htmlspecialchars((string) $viewMovement['item'], ENT_QUOTES, 'UTF-8') ?> (<?= htmlspecialchars((string) $viewMovement['sku'], ENT_QUOTES, 'UTF-8') ?>)</span>
+                    <span class="detail-value"><?= htmlspecialchars((string) $viewMovement['item'], ENT_QUOTES, 'UTF-8') ?> (Product ID: <?= (int) $viewMovement['product_id'] ?>)</span>
                 </div>
                 <div class="detail-item">
                     <span class="detail-label">Quantity</span>
@@ -407,16 +464,11 @@ $stockUrl = static function (array $overrides = []) use ($buildUrl, $filters): s
 
         <form method="post" action="<?= htmlspecialchars($buildUrl('/stock'), ENT_QUOTES, 'UTF-8') ?>" style="margin-top:12px;">
             <input type="hidden" name="movement" value="stock-in">
-            <label class="modal-field">
+            <label class="modal-field product-picker">
                 <span class="modal-label">Item *</span>
-                <select class="modal-select" name="product_id" required>
-                    <option value="">Select item</option>
-                    <?php foreach ($products as $product): ?>
-                        <option value="<?= (int) $product['id'] ?>"<?= (($formValues['product_id'] ?? '') === (string) $product['id']) ? ' selected' : '' ?>>
-                            <?= htmlspecialchars($product['name'], ENT_QUOTES, 'UTF-8') ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
+                <input class="modal-input product-search" type="search" placeholder="Search item name or Product ID" autocomplete="off" required value="<?= htmlspecialchars($selectedProductLabel($formValues['product_id'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+                <input class="product-id" type="hidden" name="product_id" value="<?= htmlspecialchars($formValues['product_id'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
+                <div class="product-results" role="listbox" aria-label="Item search results"></div>
             </label>
             <label class="modal-field">
                 <span class="modal-label">Quantity *</span>
@@ -441,16 +493,11 @@ $stockUrl = static function (array $overrides = []) use ($buildUrl, $filters): s
 
         <form method="post" action="<?= htmlspecialchars($buildUrl('/stock'), ENT_QUOTES, 'UTF-8') ?>" style="margin-top:12px;">
             <input type="hidden" name="movement" value="stock-out">
-            <label class="modal-field">
+            <label class="modal-field product-picker">
                 <span class="modal-label">Item *</span>
-                <select class="modal-select" name="product_id" required>
-                    <option value="">Select item</option>
-                    <?php foreach ($products as $product): ?>
-                        <option value="<?= (int) $product['id'] ?>"<?= (($formValues['product_id'] ?? '') === (string) $product['id']) ? ' selected' : '' ?>>
-                            <?= htmlspecialchars($product['name'], ENT_QUOTES, 'UTF-8') ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
+                <input class="modal-input product-search" type="search" placeholder="Search item name or Product ID" autocomplete="off" required value="<?= htmlspecialchars($selectedProductLabel($formValues['product_id'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+                <input class="product-id" type="hidden" name="product_id" value="<?= htmlspecialchars($formValues['product_id'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
+                <div class="product-results" role="listbox" aria-label="Item search results"></div>
             </label>
             <label class="modal-field">
                 <span class="modal-label">Quantity *</span>
@@ -475,16 +522,11 @@ $stockUrl = static function (array $overrides = []) use ($buildUrl, $filters): s
 
         <form method="post" action="<?= htmlspecialchars($buildUrl('/stock'), ENT_QUOTES, 'UTF-8') ?>" style="margin-top:12px;">
             <input type="hidden" name="movement" value="adjust">
-            <label class="modal-field">
+            <label class="modal-field product-picker">
                 <span class="modal-label">Item *</span>
-                <select class="modal-select" name="product_id" required>
-                    <option value="">Select item</option>
-                    <?php foreach ($products as $product): ?>
-                        <option value="<?= (int) $product['id'] ?>"<?= (($formValues['product_id'] ?? '') === (string) $product['id']) ? ' selected' : '' ?>>
-                            <?= htmlspecialchars($product['name'], ENT_QUOTES, 'UTF-8') ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
+                <input class="modal-input product-search" type="search" placeholder="Search item name or Product ID" autocomplete="off" required value="<?= htmlspecialchars($selectedProductLabel($formValues['product_id'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+                <input class="product-id" type="hidden" name="product_id" value="<?= htmlspecialchars($formValues['product_id'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
+                <div class="product-results" role="listbox" aria-label="Item search results"></div>
             </label>
             <label class="modal-field">
                 <span class="modal-label">New Quantity *</span>
@@ -504,11 +546,83 @@ $stockUrl = static function (array $overrides = []) use ($buildUrl, $filters): s
 
 <script>
 (() => {
+    const products = <?= json_encode($products, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
     const modals = {
         'stock-in': document.getElementById('stockInModal'),
         'stock-out': document.getElementById('stockOutModal'),
         'adjust': document.getElementById('adjustModal'),
     };
+
+    const closeProductResults = (picker) => {
+        const results = picker.querySelector('.product-results');
+        if (results) {
+            results.classList.remove('open');
+            results.innerHTML = '';
+        }
+    };
+
+    const bindProductPicker = (picker) => {
+        const search = picker.querySelector('.product-search');
+        const productId = picker.querySelector('.product-id');
+        const results = picker.querySelector('.product-results');
+        if (!search || !productId || !results) {
+            return;
+        }
+
+        const selectProduct = (product) => {
+            search.value = `${product.name} - Product ID: ${product.id}`;
+            search.setCustomValidity('');
+            productId.value = String(product.id);
+            closeProductResults(picker);
+        };
+
+        const renderResults = () => {
+            const query = productId.value !== '' ? '' : search.value.trim().toLowerCase();
+            const matches = products.filter((product) => (
+                query === ''
+                || product.name.toLowerCase().includes(query)
+                || String(product.id).includes(query)
+            )).slice(0, 30);
+
+            results.innerHTML = '';
+            if (matches.length === 0) {
+                const empty = document.createElement('div');
+                empty.className = 'product-empty';
+                empty.textContent = 'No matching items.';
+                results.appendChild(empty);
+            } else {
+                matches.forEach((product) => {
+                    const option = document.createElement('button');
+                    const name = document.createElement('strong');
+                    const meta = document.createElement('span');
+                    option.type = 'button';
+                    option.className = 'product-option';
+                    name.textContent = product.name;
+                    meta.textContent = `Product ID: ${product.id}`;
+                    option.append(name, meta);
+                    option.addEventListener('click', () => selectProduct(product));
+                    results.appendChild(option);
+                });
+            }
+            results.classList.add('open');
+        };
+
+        search.addEventListener('input', () => {
+            productId.value = '';
+            search.setCustomValidity('');
+            renderResults();
+        });
+        search.addEventListener('focus', renderResults);
+        search.closest('form')?.addEventListener('submit', (event) => {
+            if (productId.value === '') {
+                event.preventDefault();
+                search.setCustomValidity('Select an item from the search results.');
+                search.reportValidity();
+            }
+        });
+    };
+
+    document.querySelectorAll('.product-picker').forEach(bindProductPicker);
 
     const openModal = (key) => {
         if (modals[key]) {
@@ -561,6 +675,14 @@ $stockUrl = static function (array $overrides = []) use ($buildUrl, $filters): s
             return;
         }
         Object.keys(modals).forEach((key) => closeModal(key));
+    });
+
+    document.addEventListener('click', (event) => {
+        document.querySelectorAll('.product-picker').forEach((picker) => {
+            if (!picker.contains(event.target)) {
+                closeProductResults(picker);
+            }
+        });
     });
 
     const openParam = <?= json_encode($openModal) ?>;
