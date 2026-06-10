@@ -39,11 +39,6 @@ $menuGroups = [
             ['path' => '/users', 'label' => 'Users', 'icon' => 'user'],
         ],
     ],
-    [
-        'items' => [
-            ['path' => '/reports', 'label' => 'Reports', 'icon' => 'chart'],
-        ],
-    ],
 ];
 $iconSvgs = [
     'grid' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>',
@@ -53,11 +48,8 @@ $iconSvgs = [
     'arrows' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h11"/><path d="m13 3 5 4-5 4"/><path d="M17 17H6"/><path d="m11 21-5-4 5-4"/></svg>',
     'clipboard' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="4" rx="1"/><path d="M9 4H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2"/><path d="M8 10h8"/><path d="M8 14h8"/><path d="M8 18h5"/></svg>',
     'truck' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 17h4V5H2v12h3"/><path d="M14 8h4l4 4v5h-3"/><circle cx="5" cy="17" r="2"/><circle cx="17" cy="17" r="2"/><path d="M14 17H7"/></svg>',
-    'chart' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 20V14"/><path d="M12 20V10"/><path d="M18 20V4"/></svg>',
     'user' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c2-4 6-6 8-6s6 2 8 6"/></svg>',
-    'search' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>',
     'calendar' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18"/></svg>',
-    'settings' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1.1V21a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 8.6 19.4a1.7 1.7 0 0 0-1.88.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1.1-.4H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.6 8.6a1.7 1.7 0 0 0-.34-1.88l-.06-.06A2 2 0 1 1 7.03 3.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.6 1.7 1.7 0 0 0 .4-1.1V3a2 2 0 1 1 4 0v.09A1.7 1.7 0 0 0 15.4 4.6a1.7 1.7 0 0 0 1.88-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9c.18.38.5.68.9.85.2.08.42.13.7.15H21a2 2 0 1 1 0 4h-.09A1.7 1.7 0 0 0 19.4 15Z"/></svg>',
 ];
 
 $authName = (string) ($_SESSION['auth_employee_name'] ?? '');
@@ -305,38 +297,6 @@ if ($authName !== '') {
             gap: 10px;
             margin-left: auto;
         }
-        .search-wrap {
-            position: relative;
-            margin: 0;
-        }
-        .search-wrap svg {
-            position: absolute;
-            left: 13px;
-            top: 50%;
-            width: 16px;
-            height: 16px;
-            transform: translateY(-50%);
-            color: #8ba4d5;
-            pointer-events: none;
-        }
-        .search {
-            width: 310px;
-            max-width: 38vw;
-            border: 1px solid rgba(104, 151, 255, 0.18);
-            border-radius: 8px;
-            padding: 10px 14px 10px 38px;
-            font-size: 12px;
-            color: #eef5ff;
-            outline: none;
-            background: rgba(3, 14, 29, 0.86);
-        }
-        .search::placeholder {
-            color: #8ba4d5;
-        }
-        .search:focus {
-            border-color: rgba(47, 120, 255, 0.8);
-            box-shadow: 0 0 0 3px rgba(47, 120, 255, 0.18);
-        }
         .status-pill {
             border: 1px solid rgba(104, 151, 255, 0.18);
             border-radius: 8px;
@@ -353,86 +313,6 @@ if ($authName !== '') {
             width: 15px;
             height: 15px;
             color: #8ba4d5;
-        }
-        .status-pill.settings {
-            width: 36px;
-            height: 36px;
-            justify-content: center;
-            padding: 0;
-            background: rgba(11, 30, 56, 0.78);
-            border-color: rgba(104, 151, 255, 0.2);
-            color: #b7c6e4;
-            cursor: pointer;
-        }
-        .settings-menu {
-            position: relative;
-        }
-        .settings-menu summary {
-            list-style: none;
-        }
-        .settings-menu summary::-webkit-details-marker {
-            display: none;
-        }
-        .settings-menu summary:focus-visible {
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(47, 120, 255, 0.24);
-        }
-        .settings-menu[open] .status-pill.settings {
-            border-color: rgba(91, 147, 255, 0.7);
-            box-shadow: 0 12px 26px rgba(47, 120, 255, 0.3);
-        }
-        .settings-panel {
-            position: absolute;
-            right: 0;
-            top: calc(100% + 10px);
-            min-width: 220px;
-            background: linear-gradient(160deg, rgba(18, 47, 84, 0.98), rgba(12, 35, 65, 0.98));
-            border: 1px solid rgba(104, 151, 255, 0.28);
-            border-radius: 12px;
-            padding: 12px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
-            z-index: 30;
-        }
-        .settings-title {
-            font-size: 12px;
-            font-weight: 700;
-            color: #f4f7ff;
-        }
-        .settings-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            padding: 8px 0;
-            font-size: 11px;
-            color: #9db1d3;
-        }
-        .settings-row strong {
-            color: #e8f0ff;
-            font-weight: 700;
-        }
-        .settings-divider {
-            height: 1px;
-            background: rgba(104, 151, 255, 0.2);
-            margin: 8px 0;
-        }
-        .settings-link {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            border-radius: 8px;
-            padding: 9px 12px;
-            font-size: 12px;
-            font-weight: 700;
-            border: 1px solid rgba(104, 151, 255, 0.3);
-            background: rgba(11, 30, 56, 0.7);
-            color: #d5e0f2;
-            text-decoration: none;
-        }
-        .settings-link:hover {
-            border-color: rgba(104, 151, 255, 0.5);
-            color: #fff;
         }
         .avatar {
             width: 36px;
@@ -661,9 +541,6 @@ if ($authName !== '') {
             .frame {
                 grid-template-columns: 82px 1fr;
             }
-            .search {
-                width: 240px;
-            }
             .top-tab {
                 padding-inline: 13px;
             }
@@ -731,29 +608,6 @@ if ($authName !== '') {
                 display: none;
             }
             .topbar {
-                flex-direction: column;
-                align-items: stretch;
-                padding: 12px;
-            }
-            .top-tabs {
-                display: none;
-            }
-            .top-controls {
-                width: 100%;
-                margin-left: 0;
-                flex-wrap: wrap;
-            }
-            .search-wrap {
-                width: 100%;
-            }
-            .search {
-                max-width: none;
-                width: 100%;
-            }
-            .status-pill {
-                display: none;
-            }
-            .avatar {
                 display: none;
             }
             .ui-panel {
@@ -773,12 +627,6 @@ if ($authName !== '') {
             }
             .frame {
                 padding: 8px 8px 92px;
-            }
-            .topbar {
-                padding: 10px;
-            }
-            .search {
-                padding: 10px 12px 10px 38px;
             }
             .icon-link {
                 min-width: 62px;
@@ -838,7 +686,6 @@ if ($authName !== '') {
                     ['path' => '/products', 'label' => 'Products', 'icon' => 'package'],
                     ['path' => '/stock', 'label' => 'Stock', 'icon' => 'arrows'],
                     ['path' => '/accountability', 'label' => 'Accountability', 'icon' => 'clipboard'],
-                    ['path' => '/reports', 'label' => 'Reports', 'icon' => 'chart'],
                 ];
                 ?>
                 <?php foreach ($topTabs as $tab): ?>
@@ -853,43 +700,7 @@ if ($authName !== '') {
                 <?php endforeach; ?>
             </div>
             <div class="top-controls">
-                <?php
-                $globalSearchValue = '';
-                if ($activeRoute === '/products' && isset($filters) && is_array($filters)) {
-                    $globalSearchValue = (string) ($filters['q'] ?? '');
-                }
-                ?>
-                <form class="search-wrap" method="get" action="<?= htmlspecialchars($buildUrl('/products'), ENT_QUOTES, 'UTF-8') ?>" role="search">
-                    <label class="sr-only" for="globalSearch">Search products</label>
-                    <?= $iconSvgs['search'] ?>
-                    <input
-                        id="globalSearch"
-                        class="search"
-                        type="search"
-                        name="q"
-                        placeholder="Search products, Product ID, category..."
-                        value="<?= htmlspecialchars($globalSearchValue, ENT_QUOTES, 'UTF-8') ?>"
-                    >
-                </form>
                 <span class="status-pill"><?= $iconSvgs['calendar'] ?><?= htmlspecialchars(date('D, d M'), ENT_QUOTES, 'UTF-8') ?></span>
-                <details class="settings-menu">
-                    <summary class="status-pill settings" aria-label="Settings">
-                        <?= $iconSvgs['settings'] ?>
-                    </summary>
-                    <div class="settings-panel">
-                        <div class="settings-title">Quick settings</div>
-                        <div class="settings-row">
-                            <span>Timezone</span>
-                            <strong><?= htmlspecialchars(date('T'), ENT_QUOTES, 'UTF-8') ?></strong>
-                        </div>
-                        <div class="settings-row">
-                            <span>Status</span>
-                            <strong>Online</strong>
-                        </div>
-                        <div class="settings-divider"></div>
-                        <a class="settings-link" href="<?= htmlspecialchars($buildUrl('/reports'), ENT_QUOTES, 'UTF-8') ?>">Open reports</a>
-                    </div>
-                </details>
                 <?php if ($authName !== ''): ?>
                     <details class="user-menu">
                         <summary class="avatar" aria-label="User menu" data-initials="<?= htmlspecialchars($authInitials, ENT_QUOTES, 'UTF-8') ?>"></summary>
