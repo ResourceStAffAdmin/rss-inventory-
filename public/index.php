@@ -135,6 +135,10 @@ if ($handler === null && $method === 'GET' && preg_match('#^/accountability/(\d+
     $handler = [App\Controllers\UiController::class, 'printAccountability'];
     $_GET['id'] = $matches[1];
 }
+if ($handler === null && $method === 'GET' && preg_match('#^/purchase-orders/(\d+)/print$#', $uri, $matches) === 1) {
+    $handler = [App\Controllers\UiController::class, 'printPurchaseOrder'];
+    $_GET['id'] = $matches[1];
+}
 if ($handler === null && $method === 'POST' && preg_match('#^/accountability/(\d+)/return$#', $uri, $matches) === 1) {
     $handler = [App\Controllers\UiController::class, 'returnAccountability'];
     $_POST['id'] = $matches[1];

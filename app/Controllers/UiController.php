@@ -1145,6 +1145,30 @@ final class UiController
         $this->redirect('/purchase-orders?received=1');
     }
 
+    public function printPurchaseOrder(): void
+    {
+        $pdo = Database::connection();
+        $id = (int) ($_GET['id'] ?? 0);
+
+        if ($id <= 0) {
+            http_response_code(404);
+            echo 'Purchase order not found.';
+            return;
+        }
+
+        $purchaseOrder = $this->purchaseOrderDocument($pdo, $id);
+        if ($purchaseOrder === null) {
+            http_response_code(404);
+            echo 'Purchase order not found.';
+            return;
+        }
+
+        View::render('purchase_orders/print', [
+            'pageTitle' => $purchaseOrder['po_number'] . ' | Purchase Order',
+            'purchaseOrder' => $purchaseOrder,
+        ], 'layouts/print');
+    }
+
     public function cancelPurchaseOrder(): void
     {
         $pdo = Database::connection();
@@ -2915,6 +2939,175 @@ final class UiController
             ['label' => 'Received POs', 'value' => number_format($receivedOrders)],
             ['label' => 'Open PO Value', 'value' => 'PHP ' . number_format($openValue, 2)],
         ];
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function purchaseOrderDocument(PDO $pdo, int $id): ?array
+    {
+        $statement = $pdo->prepare(
+            'SELECT
+                po.id,
+                po.po_number,
+                po.status,
+                po.order_date,
+                po.expected_date,
+                po.notes,
+                s.company_name AS supplier_name,
+                s.contact_name AS supplier_contact,
+                s.email AS supplier_email,
+                s.phone AS supplier_phone,
+                s.address_line1 AS supplier_address_line1,
+                s.address_line2 AS supplier_address_line2,
+                s.city AS supplier_city,
+                s.state AS supplier_state,
+                s.postal_code AS supplier_postal_code,
+                s.country AS supplier_country,
+                l.location_name,
+                l.address_line1 AS location_address_line1,
+                l.address_line2 AS location_address_line2,
+                l.city AS location_city,
+                l.state AS location_state,
+                l.postal_code AS location_postal_code,
+                l.country AS location_country,
+                creator.full_name AS prepared_by,
+                approver.full_name AS approved_by
+             FROM purchase_orders po
+             INNER JOIN suppliers s ON s.id = po.supplier_id
+             INNER JOIN locations l ON l.id = po.location_id
+             INNER JOIN users creator ON creator.id = po.created_by
+             LEFT JOIN users approver ON approver.id = po.approved_by
+             WHERE po.id = :id'
+        );
+        $statement->execute([':id' => $id]);
+        $order = $statement->fetch(PDO::FETCH_ASSOC);
+
+        if ($order === false) {
+            return null;
+        }
+
+        $itemStatement = $pdo->prepare(
+            'SELECT
+                p.name,
+                p.description,
+                p.unit_of_measure,
+                poi.ordered_qty,
+                poi.unit_cost,
+                poi.notes
+             FROM purchase_order_items poi
+             INNER JOIN products p ON p.id = poi.product_id
+             WHERE poi.purchase_order_id = :id
+             ORDER BY poi.id ASC'
+        );
+        $itemStatement->execute([':id' => $id]);
+
+        $items = [];
+        $total = 0.0;
+        foreach ($itemStatement->fetchAll(PDO::FETCH_ASSOC) as $item) {
+            $quantity = (float) $item['ordered_qty'];
+            $unitCost = (float) $item['unit_cost'];
+            $amount = $quantity * $unitCost;
+            $total += $amount;
+
+            $description = trim((string) $item['name']);
+            $details = trim((string) ($item['notes'] ?: $item['description'] ?: ''));
+            if ($details !== '') {
+                $description .= "\n" . $details;
+            }
+
+            $items[] = [
+                'description' => $description,
+                'uom' => strtoupper((string) ($item['unit_of_measure'] ?: 'PC')),
+                'quantity' => $this->formatQuantity($quantity),
+                'unit_price' => number_format($unitCost, 2),
+                'amount' => number_format($amount, 2),
+            ];
+        }
+
+        $shipToLines = $this->addressLines([
+            (string) $order['location_address_line1'],
+            (string) $order['location_address_line2'],
+            trim((string) $order['location_city'] . ' ' . (string) $order['location_state'] . ' ' . (string) $order['location_postal_code']),
+            (string) $order['location_country'],
+        ]);
+
+        if ($shipToLines === []) {
+            $shipToLines = [
+                '4th Floor Clark Centre 10 Berthaphil',
+                'Jose Abad Santos Ave,',
+                'Clark Freeport Zone, Pampanga 2009',
+                'Philippines',
+            ];
+        }
+
+        $preparedBy = trim((string) ($_SESSION['auth_employee_name'] ?? ''));
+        if ($preparedBy === '') {
+            $preparedBy = (string) ($order['prepared_by'] ?: 'Bon Febryx C. Patacsil');
+        }
+
+        $preparedTitle = 'IT Support Specialist';
+        $authEmployeeId = (int) ($_SESSION['auth_employee_id'] ?? 0);
+        if ($authEmployeeId > 0) {
+            $employeeStatement = $pdo->prepare('SELECT position FROM employees WHERE id = :id LIMIT 1');
+            $employeeStatement->execute([':id' => $authEmployeeId]);
+            $position = trim((string) ($employeeStatement->fetchColumn() ?: ''));
+            if ($position !== '') {
+                $preparedTitle = $position;
+            }
+        }
+
+        return [
+            'id' => (int) $order['id'],
+            'po_number' => (string) $order['po_number'],
+            'status' => ucwords(strtolower(str_replace('_', ' ', (string) $order['status']))),
+            'order_date' => $this->formatDisplayDate((string) $order['order_date']),
+            'expected_date' => $order['expected_date'] !== null ? $this->formatDisplayDate((string) $order['expected_date']) : '',
+            'vendor' => [
+                'name' => (string) $order['supplier_name'],
+                'lines' => $this->addressLines([
+                    (string) $order['supplier_contact'],
+                    (string) $order['supplier_address_line1'],
+                    (string) $order['supplier_address_line2'],
+                    trim((string) $order['supplier_city'] . ' ' . (string) $order['supplier_state'] . ' ' . (string) $order['supplier_postal_code']),
+                    (string) $order['supplier_country'],
+                    (string) $order['supplier_phone'],
+                    (string) $order['supplier_email'],
+                ]),
+            ],
+            'ship_to' => [
+                'name' => (string) ($order['location_name'] ?: 'Resource Staffing Solution'),
+                'lines' => $shipToLines,
+            ],
+            'items' => $items,
+            'total' => number_format($total, 2),
+            'notes' => (string) ($order['notes'] ?? ''),
+            'prepared_by' => $preparedBy,
+            'prepared_title' => $preparedTitle,
+            'approved_by' => (string) ($order['approved_by'] ?: 'Neil Costelloe'),
+            'approved_title' => 'General Manager',
+        ];
+    }
+
+    /**
+     * @param array<int, string> $parts
+     * @return array<int, string>
+     */
+    private function addressLines(array $parts): array
+    {
+        return array_values(array_filter(array_map('trim', $parts), static fn (string $line): bool => $line !== ''));
+    }
+
+    private function formatDisplayDate(string $date): string
+    {
+        $timestamp = strtotime($date);
+        return $timestamp !== false ? date('m/d/Y', $timestamp) : $date;
+    }
+
+    private function formatQuantity(float $quantity): string
+    {
+        $formatted = number_format($quantity, 3, '.', '');
+        return rtrim(rtrim($formatted, '0'), '.');
     }
 
     /**

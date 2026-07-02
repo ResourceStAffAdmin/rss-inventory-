@@ -393,6 +393,7 @@ $statusTone = static function (string $status): string {
                             <td><?= htmlspecialchars((string) $order['total_cost'], ENT_QUOTES, 'UTF-8') ?></td>
                             <td>
                                 <div class="table-actions">
+                                    <a class="link-btn" href="<?= htmlspecialchars($buildUrl('/purchase-orders/' . (int) $order['id'] . '/print'), ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener">View/Print</a>
                                     <?php if ($order['can_send']): ?>
                                         <form class="inline-form" method="post" action="<?= htmlspecialchars($buildUrl('/purchase-orders/' . (int) $order['id'] . '/send'), ENT_QUOTES, 'UTF-8') ?>">
                                             <button type="submit">Send</button>

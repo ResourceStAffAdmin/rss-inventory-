@@ -80,21 +80,21 @@ if ($authName !== '') {
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
         :root {
-            --accent: #2877ff;
-            --accent-strong: #0e55d9;
-            --accent-soft: rgba(40, 119, 255, 0.16);
-            --cyan: #14d8cf;
-            --bg: #020916;
-            --card: #08182d;
-            --card-strong: #0c213d;
-            --text: #f3f7ff;
-            --muted: #9aabc6;
-            --muted-soft: #7185a5;
-            --border: rgba(93, 137, 196, 0.2);
+            --accent: #43b7ff;
+            --accent-strong: #1d74e8;
+            --accent-soft: rgba(67, 183, 255, 0.2);
+            --cyan: #25e4ff;
+            --bg: #061a34;
+            --card: #0b2a50;
+            --card-strong: #123a68;
+            --text: #f5f9ff;
+            --muted: #b6c8e4;
+            --muted-soft: #8da6ca;
+            --border: rgba(139, 190, 255, 0.28);
             --success: #39e47b;
             --danger: #ff4c61;
             --warning: #ffb33e;
-            --shadow: 0 18px 48px rgba(0, 0, 0, 0.38);
+            --shadow: 0 18px 42px rgba(3, 18, 42, 0.28);
             --radius: 12px;
         }
         * {
@@ -109,9 +109,9 @@ if ($authName !== '') {
         body {
             margin: 0;
             background:
-                radial-gradient(circle at 12% -8%, rgba(17, 215, 207, 0.08) 0%, transparent 30%),
-                radial-gradient(circle at 72% -14%, rgba(40, 119, 255, 0.16) 0%, transparent 38%),
-                linear-gradient(135deg, #020916 0%, #04101f 52%, #06172b 100%);
+                radial-gradient(circle at 10% -8%, rgba(37, 228, 255, 0.16) 0%, transparent 30%),
+                radial-gradient(circle at 72% -14%, rgba(67, 183, 255, 0.24) 0%, transparent 38%),
+                linear-gradient(135deg, #071d3b 0%, #0a2850 52%, #0d376b 100%);
             color: var(--text);
             padding: 0;
         }
@@ -124,7 +124,7 @@ if ($authName !== '') {
             padding: 8px;
         }
         .sidebar {
-            background: linear-gradient(180deg, rgba(5, 17, 34, 0.98), rgba(2, 10, 22, 0.99));
+            background: linear-gradient(180deg, rgba(10, 37, 72, 0.96), rgba(6, 25, 52, 0.98));
             border: 1px solid var(--border);
             border-radius: var(--radius);
             padding: 14px 10px;
@@ -176,7 +176,7 @@ if ($authName !== '') {
             height: 42px;
             border-radius: 8px;
             border: 1px solid transparent;
-            color: #8fa2bf;
+            color: #b4c7e5;
             text-decoration: none;
             display: inline-flex;
             align-items: center;
@@ -210,10 +210,10 @@ if ($authName !== '') {
         }
         .icon-link:hover,
         .icon-link.active {
-            background: linear-gradient(135deg, rgba(40, 119, 255, 0.92), rgba(12, 65, 164, 0.78));
-            border-color: rgba(91, 147, 255, 0.55);
+            background: linear-gradient(135deg, rgba(67, 183, 255, 0.94), rgba(29, 116, 232, 0.86));
+            border-color: rgba(139, 207, 255, 0.62);
             color: #fff;
-            box-shadow: 0 12px 24px rgba(47, 120, 255, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+            box-shadow: 0 12px 24px rgba(67, 183, 255, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.18);
             transform: translateY(-1px);
         }
         .icon-link[data-tooltip]::after {
@@ -222,7 +222,7 @@ if ($authName !== '') {
             left: calc(100% + 10px);
             top: 50%;
             transform: translateY(-50%) translateX(-4px);
-            background: #152f52;
+            background: #174775;
             color: #fff;
             font-size: 11px;
             padding: 6px 8px;
@@ -245,7 +245,7 @@ if ($authName !== '') {
             gap: 12px;
         }
         .topbar {
-            background: linear-gradient(180deg, rgba(7, 22, 42, 0.97), rgba(4, 15, 30, 0.98));
+            background: linear-gradient(180deg, rgba(13, 43, 82, 0.96), rgba(8, 31, 62, 0.98));
             border: 1px solid var(--border);
             border-radius: var(--radius);
             padding: 10px 14px;
@@ -264,12 +264,12 @@ if ($authName !== '') {
         }
         .top-tab {
             text-decoration: none;
-            color: #9fb0ca;
+            color: #bfd0e9;
             font-size: 11px;
             padding: 9px 17px;
             border-radius: 22px;
-            background: rgba(7, 23, 44, 0.72);
-            border: 1px solid rgba(132, 174, 255, 0.16);
+            background: rgba(12, 44, 84, 0.72);
+            border: 1px solid rgba(139, 190, 255, 0.22);
             transition: all 0.2s ease;
             display: inline-flex;
             align-items: center;
@@ -281,11 +281,11 @@ if ($authName !== '') {
             flex: 0 0 15px;
         }
         .top-tab.active {
-            background: linear-gradient(135deg, #2f78ff, #145bd8);
+            background: linear-gradient(135deg, #43b7ff, #1d74e8);
             color: #fff;
             font-weight: 700;
             border-color: rgba(111, 160, 255, 0.55);
-            box-shadow: 0 12px 24px rgba(47, 120, 255, 0.28);
+            box-shadow: 0 12px 24px rgba(67, 183, 255, 0.26);
         }
         .top-tab:hover {
             border-color: rgba(104, 151, 255, 0.36);
@@ -303,7 +303,7 @@ if ($authName !== '') {
             font-size: 11px;
             color: #e2ebfb;
             padding: 9px 11px;
-            background: rgba(3, 14, 29, 0.82);
+            background: rgba(9, 35, 68, 0.78);
             white-space: nowrap;
             display: inline-flex;
             align-items: center;
@@ -319,9 +319,9 @@ if ($authName !== '') {
             height: 36px;
             border-radius: 999px;
             background: radial-gradient(circle at 73% 78%, #52e66c 0 10%, transparent 11%),
-                linear-gradient(145deg, #2e78ff, #113a9f);
-            border: 1px solid rgba(104, 151, 255, 0.28);
-            box-shadow: 0 10px 22px rgba(37, 99, 235, 0.25);
+                linear-gradient(145deg, #43b7ff, #1a62c9);
+            border: 1px solid rgba(139, 190, 255, 0.36);
+            box-shadow: 0 10px 22px rgba(67, 183, 255, 0.22);
             position: relative;
             display: inline-flex;
             align-items: center;
@@ -360,7 +360,7 @@ if ($authName !== '') {
             right: 0;
             top: calc(100% + 10px);
             min-width: 200px;
-            background: linear-gradient(160deg, rgba(18, 47, 84, 0.98), rgba(12, 35, 65, 0.98));
+            background: linear-gradient(160deg, rgba(23, 73, 119, 0.98), rgba(13, 49, 91, 0.98));
             border: 1px solid rgba(104, 151, 255, 0.28);
             border-radius: 12px;
             padding: 12px;
@@ -402,7 +402,7 @@ if ($authName !== '') {
             animation: fadeIn 0.35s ease;
         }
         .ui-panel {
-            background: linear-gradient(180deg, rgba(9, 27, 50, 0.97), rgba(5, 19, 37, 0.98));
+            background: linear-gradient(180deg, rgba(12, 45, 84, 0.96), rgba(8, 32, 64, 0.98));
             border: 1px solid var(--border);
             border-radius: var(--radius);
             padding: 14px;
@@ -502,15 +502,15 @@ if ($authName !== '') {
             gap: 6px;
             text-decoration: none;
             color: #fff;
-            background: linear-gradient(135deg, #2f78ff, #145bd8);
+            background: linear-gradient(135deg, #43b7ff, #1d74e8);
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
         .btn:hover {
             transform: translateY(-1px);
-            box-shadow: 0 10px 18px rgba(47, 120, 255, 0.24);
+            box-shadow: 0 10px 18px rgba(67, 183, 255, 0.22);
         }
         .btn-outline {
-            background: rgba(11, 30, 56, 0.58);
+            background: rgba(11, 44, 82, 0.6);
             color: #c7d5f0;
             border-color: rgba(104, 151, 255, 0.2);
             box-shadow: none;
@@ -524,7 +524,7 @@ if ($authName !== '') {
             box-shadow: 0 8px 16px rgba(239, 68, 68, 0.24);
         }
         .btn-info {
-            background: linear-gradient(135deg, #2f78ff, #1554c7);
+            background: linear-gradient(135deg, #43b7ff, #1b6fdd);
             box-shadow: 0 8px 16px rgba(37, 99, 235, 0.24);
         }
         @keyframes fadeIn {
@@ -737,8 +737,8 @@ if ($authName !== '') {
     }
     .module-filters,
     .users-search-form {
-        background: rgba(3, 14, 29, 0.72) !important;
-        border-color: rgba(104, 151, 255, 0.16) !important;
+        background: rgba(10, 40, 76, 0.72) !important;
+        border-color: rgba(139, 190, 255, 0.22) !important;
         border-radius: 10px !important;
     }
     .module-search,
@@ -748,8 +748,8 @@ if ($authName !== '') {
     .modal-input,
     .modal-select,
     .modal-textarea {
-        background: rgba(3, 14, 29, 0.86) !important;
-        border-color: rgba(104, 151, 255, 0.2) !important;
+        background: rgba(9, 35, 68, 0.86) !important;
+        border-color: rgba(139, 190, 255, 0.28) !important;
         color: #e6eeff !important;
         border-radius: 8px !important;
     }
@@ -758,25 +758,25 @@ if ($authName !== '') {
     .users-search::placeholder,
     .modal-input::placeholder,
     .modal-textarea::placeholder {
-        color: #7890ba !important;
+        color: #93acd0 !important;
     }
     .module-select option,
     .modal-select option {
-        background: #07172c;
+        background: #0a2c55;
         color: #e6eeff;
     }
     .summary-card,
     .kpi-box {
-        background: linear-gradient(180deg, rgba(9, 27, 50, 0.97), rgba(5, 19, 37, 0.98)) !important;
-        border-color: rgba(104, 151, 255, 0.18) !important;
+        background: linear-gradient(180deg, rgba(12, 45, 84, 0.96), rgba(8, 32, 64, 0.98)) !important;
+        border-color: rgba(139, 190, 255, 0.24) !important;
         border-radius: 12px !important;
         box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
     }
     .summary-icon,
     .category-art {
-        background: rgba(47, 120, 255, 0.16) !important;
-        border-color: rgba(104, 151, 255, 0.22) !important;
-        color: #8db5ff !important;
+        background: rgba(67, 183, 255, 0.18) !important;
+        border-color: rgba(139, 207, 255, 0.28) !important;
+        color: #9bdcff !important;
     }
     .summary-card .label,
     .kpi-box .label,
@@ -795,54 +795,54 @@ if ($authName !== '') {
     }
     .detail-item,
     .meta-box {
-        background: rgba(3, 14, 29, 0.68) !important;
-        border-color: rgba(93, 137, 196, 0.18) !important;
+        background: rgba(9, 35, 68, 0.68) !important;
+        border-color: rgba(139, 190, 255, 0.22) !important;
     }
     .detail-label,
     .meta-box .label {
-        color: #8fa2bf !important;
+        color: #a7bcdb !important;
     }
     .detail-value,
     .meta-box .value {
         color: #edf4ff !important;
     }
     .product-results {
-        background: #07172c !important;
-        border-color: rgba(93, 137, 196, 0.24) !important;
-        box-shadow: 0 18px 38px rgba(0, 0, 0, 0.42) !important;
+        background: #0a2c55 !important;
+        border-color: rgba(139, 190, 255, 0.3) !important;
+        box-shadow: 0 18px 38px rgba(3, 18, 42, 0.34) !important;
     }
     .product-option strong {
         color: #edf4ff !important;
     }
     .product-option span,
     .product-empty {
-        color: #8fa2bf !important;
+        color: #a7bcdb !important;
     }
     .product-option:hover,
     .product-option:focus {
-        background: rgba(40, 119, 255, 0.14) !important;
+        background: rgba(67, 183, 255, 0.16) !important;
     }
     .employee-link:hover,
     .panel-link {
-        color: #6ea2ff !important;
+        color: #8fd6ff !important;
     }
     .modal-backdrop {
-        background: rgba(0, 4, 12, 0.72) !important;
+        background: rgba(3, 16, 36, 0.68) !important;
         backdrop-filter: blur(12px);
     }
     .modal-card {
-        background: linear-gradient(180deg, #0c2748, #06172c) !important;
-        border-color: rgba(104, 151, 255, 0.24) !important;
+        background: linear-gradient(180deg, #123f73, #0a2b55) !important;
+        border-color: rgba(139, 190, 255, 0.3) !important;
         border-radius: 12px !important;
-        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.48) !important;
+        box-shadow: 0 30px 80px rgba(3, 18, 42, 0.42) !important;
     }
     .icon-btn,
     .page-btn,
     .link-btn,
     .inline-form button,
     .action-btn.alt {
-        background: rgba(3, 14, 29, 0.78) !important;
-        border-color: rgba(104, 151, 255, 0.2) !important;
+        background: rgba(9, 35, 68, 0.78) !important;
+        border-color: rgba(139, 190, 255, 0.26) !important;
         color: #c7d5f0 !important;
         border-radius: 8px !important;
     }
@@ -857,12 +857,12 @@ if ($authName !== '') {
         color: #ff6a79 !important;
     }
     .page-btn.active {
-        background: rgba(47, 120, 255, 0.2) !important;
-        border-color: rgba(47, 120, 255, 0.58) !important;
-        color: #8db5ff !important;
+        background: rgba(67, 183, 255, 0.22) !important;
+        border-color: rgba(67, 183, 255, 0.58) !important;
+        color: #9bdcff !important;
     }
     .action-btn {
-        background: linear-gradient(135deg, #2f78ff, #145bd8) !important;
+        background: linear-gradient(135deg, #43b7ff, #1d74e8) !important;
         color: #fff !important;
         border-radius: 8px !important;
     }

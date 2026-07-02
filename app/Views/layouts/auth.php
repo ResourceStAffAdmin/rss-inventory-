@@ -15,14 +15,14 @@ declare(strict_types=1);
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
         :root {
-            --accent: #13d0a7;
-            --accent-strong: #0aa986;
-            --background: #031426;
-            --panel: rgba(8, 31, 54, 0.78);
+            --accent: #43b7ff;
+            --accent-strong: #1d74e8;
+            --background: #071d3b;
+            --panel: rgba(12, 45, 84, 0.78);
             --text: #f8fafc;
-            --muted: #a9b5c8;
-            --border: rgba(118, 166, 201, 0.26);
-            --field: rgba(4, 23, 42, 0.72);
+            --muted: #b6c8e4;
+            --border: rgba(139, 190, 255, 0.3);
+            --field: rgba(9, 35, 68, 0.78);
             --viewport-scale: clamp(1, calc(100vw / 1920px), 6);
         }
 
@@ -40,9 +40,9 @@ declare(strict_types=1);
             min-height: 100vh;
             color: var(--text);
             background:
-                radial-gradient(circle at 100% 70%, rgba(5, 127, 153, 0.3), transparent 32%),
-                radial-gradient(circle at 65% -10%, rgba(13, 75, 112, 0.24), transparent 35%),
-                linear-gradient(115deg, #020f1f 0%, #03182b 54%, #06344d 130%);
+                radial-gradient(circle at 100% 70%, rgba(37, 228, 255, 0.22), transparent 32%),
+                radial-gradient(circle at 65% -10%, rgba(67, 183, 255, 0.24), transparent 35%),
+                linear-gradient(115deg, #071d3b 0%, #0a2850 54%, #0e3a70 130%);
             font-family: "Inter", "Segoe UI", sans-serif;
             overflow-x: hidden;
         }
@@ -54,11 +54,11 @@ declare(strict_types=1);
             bottom: -250px;
             width: 540px;
             height: 540px;
-            border: 1px solid rgba(12, 160, 180, 0.08);
+            border: 1px solid rgba(139, 207, 255, 0.1);
             border-radius: 50%;
             box-shadow:
-                0 0 0 86px rgba(8, 126, 151, 0.025),
-                0 0 0 170px rgba(8, 126, 151, 0.02);
+                0 0 0 86px rgba(67, 183, 255, 0.035),
+                0 0 0 170px rgba(37, 228, 255, 0.025);
             pointer-events: none;
         }
 
@@ -211,11 +211,11 @@ declare(strict_types=1);
             border: 1px solid var(--border);
             border-radius: 15px;
             background:
-                linear-gradient(145deg, rgba(14, 43, 69, 0.73), rgba(4, 25, 46, 0.86)),
+                linear-gradient(145deg, rgba(18, 68, 116, 0.74), rgba(8, 38, 74, 0.88)),
                 var(--panel);
             box-shadow:
-                0 28px 75px rgba(0, 0, 0, 0.32),
-                inset 0 1px 0 rgba(255, 255, 255, 0.035);
+                0 28px 75px rgba(3, 18, 42, 0.32),
+                inset 0 1px 0 rgba(255, 255, 255, 0.06);
             backdrop-filter: blur(18px);
             -webkit-backdrop-filter: blur(18px);
             overflow: hidden;
@@ -230,7 +230,7 @@ declare(strict_types=1);
             width: 280px;
             height: 280px;
             border-radius: 50%;
-            background: rgba(12, 163, 173, 0.08);
+            background: rgba(67, 183, 255, 0.12);
             filter: blur(8px);
             pointer-events: none;
         }
@@ -251,9 +251,9 @@ declare(strict_types=1);
             height: 66px;
             margin: 0 auto 14px;
             color: var(--accent);
-            border: 1px solid rgba(19, 208, 167, 0.35);
+            border: 1px solid rgba(139, 207, 255, 0.4);
             border-radius: 50%;
-            background: rgba(4, 42, 61, 0.6);
+            background: rgba(10, 58, 101, 0.62);
         }
 
         .lock-badge svg {
@@ -339,9 +339,9 @@ declare(strict_types=1);
         }
 
         .field input:focus {
-            border-color: rgba(19, 208, 167, 0.72);
-            background: rgba(5, 29, 50, 0.92);
-            box-shadow: 0 0 0 3px rgba(19, 208, 167, 0.1);
+            border-color: rgba(67, 183, 255, 0.75);
+            background: rgba(10, 44, 85, 0.94);
+            box-shadow: 0 0 0 3px rgba(67, 183, 255, 0.12);
         }
 
         .password-toggle {
@@ -363,7 +363,7 @@ declare(strict_types=1);
         .password-toggle:focus-visible {
             color: var(--accent);
             outline: none;
-            background: rgba(19, 208, 167, 0.08);
+            background: rgba(67, 183, 255, 0.1);
         }
 
         .password-toggle svg {
@@ -409,12 +409,12 @@ declare(strict_types=1);
         }
 
         .remember input:checked + .checkmark {
-            color: #03241d;
+            color: #062246;
             background: var(--accent);
         }
 
         .remember input:focus-visible + .checkmark {
-            box-shadow: 0 0 0 3px rgba(19, 208, 167, 0.16);
+            box-shadow: 0 0 0 3px rgba(67, 183, 255, 0.18);
         }
 
         .auth-btn {
@@ -423,8 +423,8 @@ declare(strict_types=1);
             color: #fff;
             border: 0;
             border-radius: 9px;
-            background: linear-gradient(100deg, #0fae8c, #2bd3af);
-            box-shadow: 0 12px 30px rgba(14, 183, 148, 0.16);
+            background: linear-gradient(100deg, #1d74e8, #43b7ff);
+            box-shadow: 0 12px 30px rgba(67, 183, 255, 0.18);
             font-size: 13px;
             font-weight: 700;
             cursor: pointer;
@@ -434,7 +434,7 @@ declare(strict_types=1);
         .auth-btn:hover {
             transform: translateY(-1px);
             filter: brightness(1.05);
-            box-shadow: 0 16px 34px rgba(14, 183, 148, 0.23);
+            box-shadow: 0 16px 34px rgba(67, 183, 255, 0.24);
         }
 
         .auth-btn:active {

@@ -56,8 +56,11 @@ $emptyStockIcon = '<svg viewBox="0 0 96 80" fill="none" aria-hidden="true"><path
         overflow: hidden;
         padding: 24px;
         background:
-            linear-gradient(90deg, rgba(7, 25, 47, 0.99), rgba(8, 31, 59, 0.9)),
-            radial-gradient(circle at 90% 5%, rgba(40, 119, 255, 0.22), transparent 42%);
+            linear-gradient(90deg, rgba(18, 67, 116, 0.96), rgba(11, 47, 91, 0.9)),
+            radial-gradient(circle at 88% 8%, rgba(67, 183, 255, 0.3), transparent 42%),
+            radial-gradient(circle at 58% 110%, rgba(37, 228, 255, 0.13), transparent 44%);
+        border-color: rgba(139, 190, 255, 0.34);
+        box-shadow: 0 18px 38px rgba(3, 18, 42, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.08);
     }
     .dashboard-hero::before,
     .dashboard-hero::after {
@@ -67,7 +70,7 @@ $emptyStockIcon = '<svg viewBox="0 0 96 80" fill="none" aria-hidden="true"><path
         top: -110px;
         width: 470px;
         height: 280px;
-        border: 1px solid rgba(61, 112, 255, 0.38);
+        border: 1px solid rgba(139, 207, 255, 0.34);
         border-radius: 50%;
         transform: rotate(-16deg);
         pointer-events: none;
@@ -77,7 +80,7 @@ $emptyStockIcon = '<svg viewBox="0 0 96 80" fill="none" aria-hidden="true"><path
         top: 36px;
         width: 390px;
         height: 170px;
-        border-color: rgba(17, 215, 207, 0.14);
+        border-color: rgba(37, 228, 255, 0.2);
     }
     .hero-copy {
         position: relative;
@@ -92,7 +95,7 @@ $emptyStockIcon = '<svg viewBox="0 0 96 80" fill="none" aria-hidden="true"><path
     }
     .dashboard-subtitle {
         margin: 7px 0 0;
-        color: #c0d0e8;
+        color: #d4e5fb;
         font-size: 13px;
     }
     .last-updated {
@@ -100,9 +103,9 @@ $emptyStockIcon = '<svg viewBox="0 0 96 80" fill="none" aria-hidden="true"><path
         align-items: center;
         gap: 8px;
         font-size: 11px;
-        color: #b9c8e5;
-        background: rgba(11, 30, 56, 0.66);
-        border: 1px solid rgba(132, 174, 255, 0.24);
+        color: #d3e4f9;
+        background: rgba(15, 61, 110, 0.66);
+        border: 1px solid rgba(139, 207, 255, 0.3);
         border-radius: 999px;
         padding: 8px 12px;
         margin-top: 20px;
@@ -121,8 +124,10 @@ $emptyStockIcon = '<svg viewBox="0 0 96 80" fill="none" aria-hidden="true"><path
         gap: 12px;
     }
     .kpi-card {
-        background: linear-gradient(180deg, rgba(9, 27, 50, 0.98), rgba(5, 19, 37, 0.99));
-        border: 1px solid rgba(93, 137, 196, 0.2);
+        background:
+            radial-gradient(circle at 12% 0%, rgba(67, 183, 255, 0.18), transparent 42%),
+            linear-gradient(180deg, rgba(18, 67, 116, 0.96), rgba(11, 43, 83, 0.98));
+        border: 1px solid rgba(139, 190, 255, 0.3);
         border-radius: 10px;
         padding: 18px;
         min-height: 104px;
@@ -132,7 +137,18 @@ $emptyStockIcon = '<svg viewBox="0 0 96 80" fill="none" aria-hidden="true"><path
         align-items: center;
         position: relative;
         overflow: hidden;
-        box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.025);
+        box-shadow: 0 16px 34px rgba(3, 18, 42, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    }
+    .kpi-card::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), transparent 44%);
+        pointer-events: none;
+    }
+    .kpi-card > * {
+        position: relative;
+        z-index: 1;
     }
     .kpi-icon {
         width: 42px;
@@ -141,38 +157,39 @@ $emptyStockIcon = '<svg viewBox="0 0 96 80" fill="none" aria-hidden="true"><path
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        color: #83adff;
-        background: rgba(47, 120, 255, 0.16);
-        border: 1px solid rgba(104, 151, 255, 0.22);
+        color: #9bdcff;
+        background: rgba(67, 183, 255, 0.18);
+        border: 1px solid rgba(139, 207, 255, 0.32);
         flex-shrink: 0;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
     }
     .kpi-icon svg {
         width: 24px;
         height: 24px;
     }
     .kpi-card.cyan .kpi-icon {
-        color: #63eee9;
-        background: rgba(17, 215, 207, 0.12);
-        border-color: rgba(17, 215, 207, 0.22);
+        color: #7cf5ff;
+        background: rgba(37, 228, 255, 0.16);
+        border-color: rgba(37, 228, 255, 0.3);
     }
     .kpi-card.warning .kpi-icon {
-        color: #ffc164;
-        background: rgba(255, 179, 62, 0.13);
-        border-color: rgba(255, 179, 62, 0.24);
+        color: #ffd680;
+        background: rgba(255, 179, 62, 0.16);
+        border-color: rgba(255, 179, 62, 0.32);
     }
     .kpi-card.danger .kpi-icon {
-        color: #ff7b88;
-        background: rgba(255, 76, 97, 0.13);
-        border-color: rgba(255, 76, 97, 0.24);
+        color: #ff9aa5;
+        background: rgba(255, 76, 97, 0.16);
+        border-color: rgba(255, 76, 97, 0.32);
     }
     .kpi-card.violet .kpi-icon {
-        color: #b9a1ff;
-        background: rgba(122, 92, 255, 0.15);
-        border-color: rgba(122, 92, 255, 0.24);
+        color: #c9b7ff;
+        background: rgba(122, 92, 255, 0.18);
+        border-color: rgba(163, 139, 255, 0.32);
     }
     .kpi-label {
         font-size: 12px;
-        color: #adc0dc;
+        color: #c7d9f1;
         margin-bottom: 4px;
     }
     .kpi-value {
@@ -183,7 +200,7 @@ $emptyStockIcon = '<svg viewBox="0 0 96 80" fill="none" aria-hidden="true"><path
     }
     .kpi-subtext {
         font-size: 11px;
-        color: #91a8c8;
+        color: #aecaeb;
         margin-top: 7px;
     }
     .panel-heading {
